@@ -40,26 +40,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     public void onLocationChanged(Location newLoc) {
-
-        Toast.makeText
-                (this, "Location=" +
-                        newLoc.getLatitude() + " " +
-                        newLoc.getLongitude(), Toast.LENGTH_LONG).show();
+        mv.getController().setCenter(new GeoPoint(newLoc.getLatitude(), newLoc.getLongitude()));
+        Toast.makeText(this, "New location centre complete", Toast.LENGTH_LONG).show();
     }
 
     public void onProviderDisabled(String provider) {
-        Toast.makeText(this, "Provider " + provider +
-                " disabled", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Provider " + provider + " disabled", Toast.LENGTH_LONG).show();
     }
 
     public void onProviderEnabled(String provider) {
-        Toast.makeText(this, "Provider " + provider +
-                " enabled", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Provider " + provider + " enabled", Toast.LENGTH_LONG).show();
     }
 
     public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        Toast.makeText(this, "Status changed: " + status,
-                Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Status changed: " + status, Toast.LENGTH_LONG).show();
     }
 }

@@ -1,4 +1,4 @@
 <menu
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/choosemap" android:title="@string/addnew"/>
+    <item android:id="@+id/addnew" android:title="@string/addnew"/>
 </menu>

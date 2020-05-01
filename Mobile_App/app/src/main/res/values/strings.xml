@@ -1,4 +1,19 @@
 <resources>
     <string name="app_name">PlacesToStay</string>
     <string name="addnew">Add New</string>
+    <string name="addinstructions">To add a new place to stay input the details for it below and click add.</string>
+    <string name="name">Name:</string>
+    <string name="type">Type:</string>
+    <string-array name="types_array">
+        <item>Hotel</item>
+        <item>Resort</item>
+        <item>Boutique Hotel</item>
+        <item>Villa</item>
+        <item>Guest House</item>
+        <item>Bed and Breakfast</item>
+        <item>Hostel</item>
+        <item>Camping</item>
+    </string-array>
+    <string name="price">Price: £</string>
+    <string name="addbtn">Add</string>
 </resources>

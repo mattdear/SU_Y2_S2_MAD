@@ -15,7 +15,7 @@
             android:id="@+id/addinstructions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/addinstructions"
+            android:text="@string/add_instructions"
             android:textAlignment="center"
             android:textSize="20sp" />
     </LinearLayout>
@@ -95,6 +95,6 @@
             android:id="@+id/addbtn"
             android:layout_width="350dp"
             android:layout_height="wrap_content"
-            android:text="@string/addbtn" />
+            android:text="@string/add_btn" />
     </LinearLayout>
 </LinearLayout>

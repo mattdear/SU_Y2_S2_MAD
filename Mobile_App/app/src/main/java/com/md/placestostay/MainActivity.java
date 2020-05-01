@@ -6,7 +6,13 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
+
+
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -41,7 +47,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     public void onLocationChanged(Location newLoc) {
         mv.getController().setCenter(new GeoPoint(newLoc.getLatitude(), newLoc.getLongitude()));
-        Toast.makeText(this, "New location centre complete", Toast.LENGTH_LONG).show();
     }
 
     public void onProviderDisabled(String provider) {
@@ -54,5 +59,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     public void onStatusChanged(String provider, int status, Bundle extras) {
         Toast.makeText(this, "Status changed: " + status, Toast.LENGTH_LONG).show();
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
     }
 }

@@ -86,14 +86,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         if (requestCode == 0) {
 
             if (resultCode == RESULT_OK) {
-                Bundle extras = intent.getExtras();
-                boolean hikebikemap = extras.getBoolean("com.example.hikebikemap");
-                if (hikebikemap == true) {
-                    mv.setTileSource(TileSourceFactory.HIKEBIKEMAP);
-                } else {
-                    mv.setTileSource(TileSourceFactory.MAPNIK);
-                }
+                Toast.makeText(this, "New PTS added", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
             }
         }
+
     }
 }

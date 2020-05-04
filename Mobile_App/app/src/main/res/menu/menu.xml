@@ -1,4 +1,11 @@
-<menu
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/addnew" android:title="@string/addnew"/>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/addnew"
+        android:title="@string/addnew" />
+    <item
+        android:id="@+id/save"
+        android:title="@string/save" />
+    <item
+        android:id="@+id/load"
+        android:title="@string/load" />
 </menu>

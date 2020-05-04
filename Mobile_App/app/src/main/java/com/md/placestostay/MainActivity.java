@@ -6,6 +6,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -13,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.osmdroid.config.Configuration;
@@ -21,15 +23,21 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, View.OnClickListener {
 
     MapView mv;
-    ItemizedIconOverlay<OverlayItem> placesToStay;
+    ItemizedIconOverlay<OverlayItem> unsavedPlacesToStay;
+    ItemizedIconOverlay<OverlayItem> loadedPlacesToStay;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
-    Double lat = null;
-    Double lon = null;
+    Double gpsLat = null;
+    Double gpsLon = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,13 +71,21 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
         };
 
+        //creates the overlays
+        unsavedPlacesToStay = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
+        loadedPlacesToStay = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
+
+        //links overlays to map.
+        mv.getOverlays().add(unsavedPlacesToStay);
+        mv.getOverlays().add(loadedPlacesToStay);
+
     }
 
     //updates the map view base on GPS location.
     public void onLocationChanged(Location newLocation) {
-        lat = newLocation.getLatitude();
-        lon = newLocation.getLongitude();
-        mv.getController().setCenter(new GeoPoint(lat, lon));
+        gpsLat = newLocation.getLatitude();
+        gpsLon = newLocation.getLongitude();
+        mv.getController().setCenter(new GeoPoint(gpsLat, gpsLon));
     }
 
     //alert for GPS provider disabled.
@@ -99,8 +115,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         if (item.getItemId() == R.id.addnew) {
             Intent intent = new Intent(this, AddNewActivity.class);
             startActivityForResult(intent, 0);
+        } else if (item.getItemId() == R.id.save) {
+            savePTSLocally();
+            return true;
+        } else if (item.getItemId() == R.id.load) {
+            loadLocalPTS();
+            return true;
         }
         return false;
+
     }
 
     //this actions the returned intent from the child activity's
@@ -109,15 +132,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         if (requestCode == 0) {
 
             if (resultCode == RESULT_OK) {
-                placesToStay = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
                 Bundle extras = intent.getExtras();
                 String title = extras.getString("name");
-
-                String description = "Name: " + extras.getString("name") + "\n";
-                description += "Type: " + extras.getString("type") + "\n";
+                String description = "Name: " + extras.getString("name") + " ";
+                description += "Type: " + extras.getString("type") + " ";
                 description += "Price: £" + extras.getDouble("price");
-                placesToStay.addItem(new OverlayItem(title, description, new GeoPoint(lat, lon)));
-                mv.getOverlays().add(placesToStay);
+                unsavedPlacesToStay.addItem(new OverlayItem(title, description, new GeoPoint(gpsLat, gpsLon)));
             } else {
                 Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
             }
@@ -125,5 +145,48 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     }
 
-    public void onClick(View v) { }
+    public void onClick(View v) {
+    }
+
+    public void savePTSLocally() {
+        try {
+            PrintWriter pw =
+                    new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/localPlacesToStay.txt"));
+            Integer unsavedPlacesToStaySize = unsavedPlacesToStay.size();
+            for (Integer i = 0; i < unsavedPlacesToStaySize; i++) {
+                OverlayItem placeToStay = unsavedPlacesToStay.getItem(i);
+                String name = placeToStay.getTitle();
+                String description = placeToStay.getSnippet();
+                Double lat = placeToStay.getPoint().getLatitude();
+                Double lon = placeToStay.getPoint().getLongitude();
+                pw.println(name + "," + description + "," + lat + "," + lon);
+            }
+            pw.close();
+        } catch (IOException e) {
+            new AlertDialog.Builder(this).setPositiveButton("OK", null).
+                    setMessage("ERROR: " + e).show();
+        }
+    }
+
+    public void loadLocalPTS() {
+        try {
+            FileReader fr = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/localPlacesToStay.txt");
+            BufferedReader reader = new BufferedReader(fr);
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                String[] ptsComponents = line.split(",");
+                if (ptsComponents.length == 4) {
+                    String title = ptsComponents[0];
+                    String description = ptsComponents[1];
+                    Double lat = Double.parseDouble(ptsComponents[2]);
+                    Double lon = Double.parseDouble(ptsComponents[3]);
+                    loadedPlacesToStay.addItem(new OverlayItem(title, description, new GeoPoint(lat, lon)));
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            new AlertDialog.Builder(this).setPositiveButton("OK", null).
+                    setMessage("ERROR: " + e).show();
+        }
+    }
 }

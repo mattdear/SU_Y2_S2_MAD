@@ -16,4 +16,6 @@
     </string-array>
     <string name="price">Price: £</string>
     <string name="add_btn">Add</string>
+    <string name="save">Save to file</string>
+    <string name="load">Load from file</string>
 </resources>

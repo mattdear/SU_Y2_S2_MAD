@@ -18,4 +18,6 @@
     <string name="add_btn">Add</string>
     <string name="save">Save to file</string>
     <string name="load">Load from file</string>
+    <string name="remoteload">Load from web</string>
+    <string name="remotesave">Save to web</string>
 </resources>

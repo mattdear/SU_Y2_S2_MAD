@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -27,7 +28,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, View.OnClickListener {
@@ -40,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
     Double gpsLat = null;
     Double gpsLon = null;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -123,9 +129,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         } else if (item.getItemId() == R.id.load) {
             loadLocalPTS();
             return true;
+        } else if (item.getItemId() == R.id.remote_load) {
+            InnerRemoteLoad task = new InnerRemoteLoad();
+            task.execute();
+            return true;
         }
         return false;
-
     }
 
     //this actions the returned intent from the child activity's
@@ -217,6 +226,51 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         } catch (IOException e) {
             new AlertDialog.Builder(this).setPositiveButton("OK", null).
                     setMessage("ERROR: " + e).show();
+        }
+    }
+
+    //Task 6
+    class InnerRemoteLoad extends AsyncTask<Void, Void, String> {
+
+        public String doInBackground(Void... unused) {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL("https://www.hikar.org/course/ws/get.php?year=20&username=user008&format=csv");
+                conn = (HttpURLConnection) url.openConnection();
+                InputStream in = conn.getInputStream();
+                if (conn.getResponseCode() == 200) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                    String line = "";
+                    boolean isComplete = false;
+                    while ((line = br.readLine()) != null) {
+                        String[] ptsComponents = line.split(",");
+                        if (ptsComponents.length == 5) {
+                            String name = ptsComponents[0];
+                            String type = ptsComponents[1];
+                            Double price = Double.parseDouble(ptsComponents[2]);
+                            Double latitude = Double.parseDouble(ptsComponents[4]);
+                            Double longitude = Double.parseDouble(ptsComponents[3]);
+                            Place place = new Place(name, type, price, latitude, longitude);
+                            MainActivity.this.loadedPlaces.add(place);
+                        }
+                    }
+                    isComplete = MainActivity.this.addToOverlay(loadedPlaces, loadedPlacesToStay);
+                    return "Remote load completed" + isComplete;
+                } else {
+                    return "HTTP ERROR: " + conn.getResponseCode();
+                }
+            } catch (IOException e) {
+                return e.toString();
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        }
+
+        public void onPostExecute(String result) {
+            new AlertDialog.Builder(MainActivity.this).setMessage(result).
+                    setPositiveButton("OK", null).show();
         }
     }
 }

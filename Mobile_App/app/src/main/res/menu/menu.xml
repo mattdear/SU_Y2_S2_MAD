@@ -8,4 +8,10 @@
     <item
         android:id="@+id/load"
         android:title="@string/load" />
+    <item
+        android:id="@+id/remote_save"
+        android:title="@string/remotesave" />
+    <item
+        android:id="@+id/remote_load"
+        android:title="@string/remoteload" />
 </menu>

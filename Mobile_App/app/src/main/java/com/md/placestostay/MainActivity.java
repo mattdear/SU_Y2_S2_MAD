@@ -33,6 +33,8 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements LocationListener, View.OnClickListener {
 
     MapView mv;
+    ArrayList<Place> unsavedPlaces = new ArrayList<>();
+    ArrayList<Place> loadedPlaces = new ArrayList<>();
     ItemizedIconOverlay<OverlayItem> unsavedPlacesToStay;
     ItemizedIconOverlay<OverlayItem> loadedPlacesToStay;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
@@ -133,34 +135,54 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
             if (resultCode == RESULT_OK) {
                 Bundle extras = intent.getExtras();
-                String title = extras.getString("name");
-                String description = "Name: " + extras.getString("name") + " ";
-                description += "Type: " + extras.getString("type") + " ";
-                description += "Price: £" + extras.getDouble("price");
-                unsavedPlacesToStay.addItem(new OverlayItem(title, description, new GeoPoint(gpsLat, gpsLon)));
+                String name = extras.getString("name");
+                String type = extras.getString("type");
+                Double price = extras.getDouble("price");
+                Double latitude = gpsLat;
+                Double longitude = gpsLon;
+                Place place = new Place(name, type, price, latitude, longitude);
+                unsavedPlaces.add(place);
+                Boolean isComplete = addToOverlay(unsavedPlaces, unsavedPlacesToStay);
+                if (isComplete) {
+                    Toast.makeText(this, "New PTS added", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
+                }
             } else {
                 Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
             }
         }
-
     }
 
     public void onClick(View v) {
+    }
+
+    public boolean addToOverlay(ArrayList<Place> places, ItemizedIconOverlay<OverlayItem> overlay) {
+        Integer length = places.size();
+        for (Integer i = 0; i < length; i++) {
+            Place place = places.get(i);
+            String title = place.getName();
+            String snippet = "Name: " + place.getName() + "\n" + "Type: " + place.getType() + "\n" + "Price: £" + place.getPrice();
+            overlay.addItem(new OverlayItem(title, snippet, new GeoPoint(place.getLatitude(), place.getLongitude())));
+        }
+        return true;
     }
 
     public void savePTSLocally() {
         try {
             PrintWriter pw =
                     new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/localPlacesToStay.txt"));
-            Integer unsavedPlacesToStaySize = unsavedPlacesToStay.size();
-            for (Integer i = 0; i < unsavedPlacesToStaySize; i++) {
-                OverlayItem placeToStay = unsavedPlacesToStay.getItem(i);
-                String name = placeToStay.getTitle();
-                String description = placeToStay.getSnippet();
-                Double lat = placeToStay.getPoint().getLatitude();
-                Double lon = placeToStay.getPoint().getLongitude();
-                pw.println(name + "," + description + "," + lat + "," + lon);
+            Integer unsavedPlacesSize = unsavedPlaces.size();
+            for (Integer i = 0; i < unsavedPlacesSize; i++) {
+                Place place = unsavedPlaces.get(i);
+                String name = place.getName();
+                String type = place.getType();
+                Double price = place.getPrice();
+                Double latitude = place.getLatitude();
+                Double longitude = place.getLongitude();
+                pw.println(name + "," + type + "," + price + "," + latitude + "," + longitude);
             }
+            Toast.makeText(this, "Complete local save", Toast.LENGTH_SHORT).show();
             pw.close();
         } catch (IOException e) {
             new AlertDialog.Builder(this).setPositiveButton("OK", null).
@@ -175,12 +197,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             String line = "";
             while ((line = reader.readLine()) != null) {
                 String[] ptsComponents = line.split(",");
-                if (ptsComponents.length == 4) {
-                    String title = ptsComponents[0];
-                    String description = ptsComponents[1];
-                    Double lat = Double.parseDouble(ptsComponents[2]);
-                    Double lon = Double.parseDouble(ptsComponents[3]);
-                    loadedPlacesToStay.addItem(new OverlayItem(title, description, new GeoPoint(lat, lon)));
+                if (ptsComponents.length == 5) {
+                    String name = ptsComponents[0];
+                    String type = ptsComponents[1];
+                    Double price = Double.parseDouble(ptsComponents[2]);
+                    Double latitude = Double.parseDouble(ptsComponents[3]);
+                    Double longitude = Double.parseDouble(ptsComponents[4]);
+                    Place place = new Place(name, type, price, latitude, longitude);
+                    loadedPlaces.add(place);
+                    Boolean isComplete = addToOverlay(loadedPlaces, loadedPlacesToStay);
+                    if (isComplete) {
+                        Toast.makeText(this, "Local load complete", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Failed local load", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
             reader.close();

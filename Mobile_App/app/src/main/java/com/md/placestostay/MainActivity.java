@@ -2,6 +2,7 @@ package com.md.placestostay;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -46,6 +47,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
     Double gpsLat = null;
     Double gpsLon = null;
+    boolean autoLocalSave = false;
+    boolean autoLocalLoad = false;
+    boolean autoRemoteSave = false;
+    boolean autoRemoteLoad = false;
 
 
     @Override
@@ -88,6 +93,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         mv.getOverlays().add(unsavedPlacesToStay);
         mv.getOverlays().add(loadedPlacesToStay);
 
+    }
+
+    public void onResume() {
+        super.onResume();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        autoLocalSave = prefs.getBoolean("auto_local_save", false);
+        autoLocalLoad = prefs.getBoolean("auto_local_load", false);
+        autoRemoteSave = prefs.getBoolean("auto_remote_save", false);
+        autoRemoteLoad = prefs.getBoolean("auto_remote_load", false);
     }
 
     //updates the map view base on GPS location.
@@ -137,6 +151,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         } else if (item.getItemId() == R.id.remote_save) {
             InnerRemoteSave remoteSave = new InnerRemoteSave();
             remoteSave.execute();
+        } else if (item.getItemId() == R.id.preferences) {
+            Intent intent = new Intent(this, PreferencesActivity.class);
+            startActivityForResult(intent, 1);
         }
         return false;
     }

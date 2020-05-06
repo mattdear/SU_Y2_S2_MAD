@@ -26,6 +26,9 @@
         <activity
             android:name=".AddNewActivity"
             android:label="@string/addnew"></activity>
+        <activity
+            android:name=".PreferencesActivity"
+            android:label="@string/preferences"></activity>
     </application>
 
 </manifest>

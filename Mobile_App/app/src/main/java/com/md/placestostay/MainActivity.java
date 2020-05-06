@@ -30,6 +30,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -130,9 +131,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             loadLocalPTS();
             return true;
         } else if (item.getItemId() == R.id.remote_load) {
-            InnerRemoteLoad task = new InnerRemoteLoad();
-            task.execute();
+            InnerRemoteLoad remoteLoad = new InnerRemoteLoad();
+            remoteLoad.execute();
             return true;
+        } else if (item.getItemId() == R.id.remote_save) {
+            InnerRemoteSave remoteSave = new InnerRemoteSave();
+            remoteSave.execute();
         }
         return false;
     }
@@ -229,7 +233,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
     }
 
-    //Task 6
     class InnerRemoteLoad extends AsyncTask<Void, Void, String> {
 
         public String doInBackground(Void... unused) {
@@ -273,4 +276,54 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     setPositiveButton("OK", null).show();
         }
     }
+
+    class InnerRemoteSave extends AsyncTask<Void, Void, String> {
+        public String doInBackground(Void... unused) {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL("https://www.hikar.org/course/ws/add.php");
+                Integer unsavedPlacesSize = MainActivity.this.unsavedPlaces.size();
+                System.out.println(unsavedPlacesSize);
+                String all = "";
+                for (Integer i = 0; i < unsavedPlacesSize; i++) {
+                    Place place = MainActivity.this.unsavedPlaces.get(i);
+                    String name = place.getName();
+                    String type = place.getType();
+                    Double price = place.getPrice();
+                    Double latitude = place.getLatitude();
+                    Double longitude = place.getLongitude();
+                    String postData = "username=user008&name=" + name + "&type=" + type + "&price=" + price + "&lon=" + longitude + "&lat=" + latitude + "&year=20";
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setDoOutput(true);
+                    conn.setFixedLengthStreamingMode(postData.length());
+                    OutputStream out = null;
+                    out = conn.getOutputStream();
+                    out.write(postData.getBytes());
+                    if (conn.getResponseCode() == 200) {
+                        InputStream in = conn.getInputStream();
+                        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                        String line = "";
+                        while ((line = br.readLine()) != null)
+                            all += line;
+                    } else {
+                        return "HTTP ERROR: " + conn.getResponseCode();
+                    }
+                    conn.disconnect();
+                }
+                return all;
+            } catch (IOException e) {
+                return e.toString();
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        }
+
+        public void onPostExecute(String result) {
+            new AlertDialog.Builder(MainActivity.this).setMessage(result).
+                    setPositiveButton("OK", null).show();
+        }
+    }
+
 }

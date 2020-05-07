@@ -97,6 +97,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         autoLocalLoad = prefs.getBoolean("auto_local_load", false);
         autoRemoteSave = prefs.getBoolean("auto_remote_save", false);
         autoRemoteLoad = prefs.getBoolean("auto_remote_load", false);
+        if (autoLocalLoad) {
+            loadLocalPTS();
+        }
+        if (autoRemoteLoad) {
+            InnerRemoteLoad remoteLoad = new InnerRemoteLoad();
+            remoteLoad.execute();
+        }
     }
 
     //updates the map view base on GPS location.
@@ -168,6 +175,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 Place place = new Place(name, type, price, latitude, longitude);
                 unsavedPlaces.add(place);
                 addToOverlay(unsavedPlaces, mapMarkers);
+                if (autoLocalSave) {
+                    savePTSLocally();
+                }
+                if (autoRemoteSave) {
+                    InnerRemoteSave remoteSave = new InnerRemoteSave();
+                    remoteSave.execute();
+                }
                 Toast.makeText(this, "New PTS added", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();

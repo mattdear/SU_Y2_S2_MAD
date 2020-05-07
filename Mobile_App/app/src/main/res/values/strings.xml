@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">PlacesToStay</string>
-    <string name="addnew">Add New</string>
-    <string name="add_instructions">To add a new place to stay input the details for it below and click add.</string>
+    <string name="addnew">Add new place</string>
+    <string name="add_instructions">To add a new place to stay input the details for it below and click add place.</string>
     <string name="name">Name:</string>
     <string name="type">Type:</string>
     <string-array name="types_array">
@@ -15,18 +15,18 @@
         <item>Camping</item>
     </string-array>
     <string name="price">Price: £</string>
-    <string name="add_btn">Add</string>
+    <string name="add_btn">Add Place</string>
     <string name="save">Save to file</string>
     <string name="load">Load from file</string>
     <string name="remoteload">Load from web</string>
     <string name="remotesave">Save to web</string>
-    <string name="auto_local_save_title">Automatic save local</string>
-    <string name="auto_local_load_title">Automatic load local</string>
-    <string name="auto_remote_save_title">Automatic save Remote</string>
-    <string name="auto_remote_load_title">Automatic load Remote</string>
-    <string name="auto_local_save_summary">Turn on/off the automatic local saving of PTSs</string>
-    <string name="auto_local_load_summary">Turn on/off the automatic loading of local PTSs</string>
-    <string name="auto_remote_save_summary">Turn on/off the automatic remote saving of PTSs</string>
-    <string name="auto_remote_load_summary">Turn on/off the automatic loading of remote PTSs</string>
+    <string name="auto_local_save_title">Automatic save to file</string>
+    <string name="auto_local_load_title">Automatic load from file</string>
+    <string name="auto_remote_save_title">Automatic save to web</string>
+    <string name="auto_remote_load_title">Automatic load to web</string>
+    <string name="auto_local_save_summary">Turn on/off the automatic saving of places to a local file.</string>
+    <string name="auto_local_load_summary">Turn on/off the automatic loading of places from a local file.</string>
+    <string name="auto_remote_save_summary">Turn on/off the automatic saving of places to the web.</string>
+    <string name="auto_remote_load_summary">Turn on/off the automatic loading of places from the web.</string>
     <string name="preferences">Preferences</string>
 </resources>

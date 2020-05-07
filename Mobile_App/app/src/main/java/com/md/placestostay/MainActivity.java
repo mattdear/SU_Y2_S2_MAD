@@ -42,8 +42,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     MapView mv;
     ArrayList<Place> unsavedPlaces = new ArrayList<>();
     ArrayList<Place> loadedPlaces = new ArrayList<>();
-    ItemizedIconOverlay<OverlayItem> unsavedPlacesToStay;
-    ItemizedIconOverlay<OverlayItem> loadedPlacesToStay;
+    ItemizedIconOverlay<OverlayItem> mapMarkers;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
     Double gpsLat = null;
     Double gpsLon = null;
@@ -51,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     boolean autoLocalLoad = false;
     boolean autoRemoteSave = false;
     boolean autoRemoteLoad = false;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,13 +84,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         };
 
         //creates the overlays
-        unsavedPlacesToStay = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
-        loadedPlacesToStay = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
+        mapMarkers = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
 
         //links overlays to map.
-        mv.getOverlays().add(unsavedPlacesToStay);
-        mv.getOverlays().add(loadedPlacesToStay);
-
+        mv.getOverlays().add(mapMarkers);
     }
 
     public void onResume() {
@@ -172,12 +167,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 Double longitude = gpsLon;
                 Place place = new Place(name, type, price, latitude, longitude);
                 unsavedPlaces.add(place);
-                Boolean isComplete = addToOverlay(unsavedPlaces, unsavedPlacesToStay);
-                if (isComplete) {
-                    Toast.makeText(this, "New PTS added", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
-                }
+                addToOverlay(unsavedPlaces, mapMarkers);
+                Toast.makeText(this, "New PTS added", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
             }
@@ -187,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onClick(View v) {
     }
 
-    public boolean addToOverlay(ArrayList<Place> places, ItemizedIconOverlay<OverlayItem> overlay) {
+    public void addToOverlay(ArrayList<Place> places, ItemizedIconOverlay<OverlayItem> overlay) {
         Integer length = places.size();
         for (Integer i = 0; i < length; i++) {
             Place place = places.get(i);
@@ -195,13 +186,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             String snippet = "Name: " + place.getName() + "\n" + "Type: " + place.getType() + "\n" + "Price: £" + place.getPrice();
             overlay.addItem(new OverlayItem(title, snippet, new GeoPoint(place.getLatitude(), place.getLongitude())));
         }
-        return true;
     }
 
     public void savePTSLocally() {
         try {
             PrintWriter pw =
-                    new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/localPlacesToStay.txt"));
+                    new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt"));
             Integer unsavedPlacesSize = unsavedPlaces.size();
             for (Integer i = 0; i < unsavedPlacesSize; i++) {
                 Place place = unsavedPlaces.get(i);
@@ -222,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     public void loadLocalPTS() {
         try {
-            FileReader fr = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/localPlacesToStay.txt");
+            FileReader fr = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt");
             BufferedReader reader = new BufferedReader(fr);
             String line = "";
             while ((line = reader.readLine()) != null) {
@@ -235,12 +225,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     Double longitude = Double.parseDouble(ptsComponents[4]);
                     Place place = new Place(name, type, price, latitude, longitude);
                     loadedPlaces.add(place);
-                    Boolean isComplete = addToOverlay(loadedPlaces, loadedPlacesToStay);
-                    if (isComplete) {
-                        Toast.makeText(this, "Local load complete", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this, "Failed local load", Toast.LENGTH_SHORT).show();
-                    }
+                    addToOverlay(loadedPlaces, mapMarkers);
+                    Toast.makeText(this, "Local load complete", Toast.LENGTH_SHORT).show();
                 }
             }
             reader.close();
@@ -261,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 if (conn.getResponseCode() == 200) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(in));
                     String line = "";
-                    boolean isComplete = false;
                     while ((line = br.readLine()) != null) {
                         String[] ptsComponents = line.split(",");
                         if (ptsComponents.length == 5) {
@@ -274,8 +259,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                             MainActivity.this.loadedPlaces.add(place);
                         }
                     }
-                    isComplete = MainActivity.this.addToOverlay(loadedPlaces, loadedPlacesToStay);
-                    return "Remote load completed" + isComplete;
+                    MainActivity.this.addToOverlay(loadedPlaces, mapMarkers);
+                    return "Remote load completed";
                 } else {
                     return "HTTP ERROR: " + conn.getResponseCode();
                 }
@@ -327,7 +312,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     }
                     conn.disconnect();
                 }
-                return all;
+                return "Remote save completed";
             } catch (IOException e) {
                 return e.toString();
             } finally {

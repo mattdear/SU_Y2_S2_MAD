@@ -36,6 +36,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, View.OnClickListener {
@@ -194,11 +195,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     }
 
     public void addToOverlay(ArrayList<Place> places, ItemizedIconOverlay<OverlayItem> overlay) {
+        DecimalFormat df = new DecimalFormat("#.00");
         Integer length = places.size();
         for (Integer i = 0; i < length; i++) {
             Place place = places.get(i);
             String title = place.getName();
-            String snippet = "Name: " + place.getName() + "\n" + "Type: " + place.getType() + "\n" + "Price: £" + place.getPrice();
+            String snippet = "Name: " + place.getName() + "\n" + "Type: " + place.getType() + "\n" + "Price: £" + df.format(place.getPrice());
             overlay.addItem(new OverlayItem(title, snippet, new GeoPoint(place.getLatitude(), place.getLongitude())));
         }
     }

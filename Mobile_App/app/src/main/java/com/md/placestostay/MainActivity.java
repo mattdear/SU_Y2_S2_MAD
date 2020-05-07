@@ -26,6 +26,7 @@ import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -204,8 +205,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     public void savePTSLocally() {
         try {
-            PrintWriter pw =
-                    new PrintWriter(new FileWriter(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt"));
+            PrintWriter pw = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt",true));
             Integer unsavedPlacesSize = unsavedPlaces.size();
             for (Integer i = 0; i < unsavedPlacesSize; i++) {
                 Place place = unsavedPlaces.get(i);

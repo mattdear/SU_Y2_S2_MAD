@@ -141,6 +141,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         if (item.getItemId() == R.id.addnew) {
             Intent intent = new Intent(this, AddNewActivity.class);
             startActivityForResult(intent, 0);
+            return true;
         } else if (item.getItemId() == R.id.save) {
             savePTSLocally();
             return true;
@@ -154,9 +155,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         } else if (item.getItemId() == R.id.remote_save) {
             InnerRemoteSave remoteSave = new InnerRemoteSave();
             remoteSave.execute();
+            return true;
         } else if (item.getItemId() == R.id.preferences) {
             Intent intent = new Intent(this, PreferencesActivity.class);
             startActivityForResult(intent, 1);
+            return true;
         }
         return false;
     }

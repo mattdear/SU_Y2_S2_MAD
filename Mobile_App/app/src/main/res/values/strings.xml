@@ -23,7 +23,7 @@
     <string name="auto_local_save_title">Automatic save to file</string>
     <string name="auto_local_load_title">Automatic load from file</string>
     <string name="auto_remote_save_title">Automatic save to web</string>
-    <string name="auto_remote_load_title">Automatic load to web</string>
+    <string name="auto_remote_load_title">Automatic load from web</string>
     <string name="auto_local_save_summary">Turn on/off the automatic saving of places to a local file.</string>
     <string name="auto_local_load_summary">Turn on/off the automatic loading of places from a local file.</string>
     <string name="auto_remote_save_summary">Turn on/off the automatic saving of places to the web.</string>

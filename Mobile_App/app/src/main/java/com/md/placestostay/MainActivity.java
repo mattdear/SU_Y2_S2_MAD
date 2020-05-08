@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     boolean autoLocalLoad = false;
     boolean autoRemoteSave = false;
     boolean autoRemoteLoad = false;
+    DecimalFormat df = new DecimalFormat("#.00");
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         //defines the map view and sets the initial GPS location.
         mv = findViewById(R.id.map1);
         mv.setMultiTouchControls(true);
-        mv.getController().setZoom(16.0);
+        mv.getController().setZoom(20.0);
         mv.getController().setCenter(new GeoPoint(51.05, -0.72));
 
         //to make it so when you click on a place to stay it shows you its information.
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         };
 
         //creates the overlays.
-        mapMarkers = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
+        mapMarkers = new ItemizedIconOverlay<>(this, new ArrayList<OverlayItem>(), markerGestureListener);
 
         //links overlays to map.
         mv.getOverlays().add(mapMarkers);
@@ -167,28 +168,30 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     //this actions the returned intent from other activity's.
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
+        super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == 0) {
-
             if (resultCode == RESULT_OK) {
                 Bundle extras = intent.getExtras();
-                String name = extras.getString("name");
-                String type = extras.getString("type");
-                Double price = extras.getDouble("price");
-                Double latitude = gpsLat;
-                Double longitude = gpsLon;
-                Place place = new Place(name, type, price, latitude, longitude);
-                unsavedPlaces.add(place);
-                addToOverlay(unsavedPlaces, mapMarkers);
-                if (autoLocalSave) {
-                    savePTSLocally();
+                if (extras != null) {
+                    String name = extras.getString("name");
+                    String type = extras.getString("type");
+                    Double price = extras.getDouble("price");
+                    Double latitude = gpsLat;
+                    Double longitude = gpsLon;
+                    Place place = new Place(name, type, price, latitude, longitude);
+                    unsavedPlaces.add(place);
+                    addToOverlay(unsavedPlaces);
+                    if (autoLocalSave) {
+                        savePTSLocally();
+                    }
+                    if (autoRemoteSave) {
+                        InnerRemoteSave remoteSave = new InnerRemoteSave();
+                        remoteSave.execute();
+                    }
+                    Toast.makeText(this, "New place added", Toast.LENGTH_SHORT).show();
                 }
-                if (autoRemoteSave) {
-                    InnerRemoteSave remoteSave = new InnerRemoteSave();
-                    remoteSave.execute();
-                }
-                Toast.makeText(this, "New PTS added", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Failed to add new PTS", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Failed to add new place", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -196,61 +199,54 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onClick(View v) {
     }
 
-    public void addToOverlay(ArrayList<Place> places, ItemizedIconOverlay<OverlayItem> overlay) {
-        DecimalFormat df = new DecimalFormat("#.00");
-        Integer length = places.size();
-        for (Integer i = 0; i < length; i++) {
-            Place place = places.get(i);
+    public void addToOverlay(ArrayList<Place> places) {
+        for (Place place : places) {
             String title = place.getName();
             String snippet = "Name: " + place.getName() + "\n" + "Type: " + place.getType() + "\n" + "Price: £" + df.format(place.getPrice());
-            overlay.addItem(new OverlayItem(title, snippet, new GeoPoint(place.getLatitude(), place.getLongitude())));
+            mapMarkers.addItem(new OverlayItem(title, snippet, new GeoPoint(place.getLatitude(), place.getLongitude())));
         }
     }
 
     public void savePTSLocally() {
         try {
-            PrintWriter pw = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt", true));
-            Integer unsavedPlacesSize = unsavedPlaces.size();
-            for (Integer i = 0; i < unsavedPlacesSize; i++) {
-                Place place = unsavedPlaces.get(i);
+            PrintWriter printWriter = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt", true));
+            for (Place place : unsavedPlaces) {
                 String name = place.getName();
                 String type = place.getType();
                 Double price = place.getPrice();
                 Double latitude = place.getLatitude();
                 Double longitude = place.getLongitude();
-                pw.println(name + "," + type + "," + price + "," + latitude + "," + longitude);
+                printWriter.println(name + "," + type + "," + price + "," + latitude + "," + longitude);
             }
-            Toast.makeText(this, "Complete local save", Toast.LENGTH_SHORT).show();
-            pw.close();
+            printWriter.close();
+            Toast.makeText(this, "Local save successful", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
-            new AlertDialog.Builder(this).setPositiveButton("OK", null).
-                    setMessage("ERROR: " + e).show();
+            new AlertDialog.Builder(this).setPositiveButton("OK", null).setMessage("ERROR: " + e).show();
         }
     }
 
     public void loadLocalPTS() {
         try {
-            FileReader fr = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt");
-            BufferedReader reader = new BufferedReader(fr);
-            String line = "";
-            while ((line = reader.readLine()) != null) {
-                String[] ptsComponents = line.split(",");
-                if (ptsComponents.length == 5) {
-                    String name = ptsComponents[0];
-                    String type = ptsComponents[1];
-                    Double price = Double.parseDouble(ptsComponents[2]);
-                    Double latitude = Double.parseDouble(ptsComponents[3]);
-                    Double longitude = Double.parseDouble(ptsComponents[4]);
+            FileReader fileReader = new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt");
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] placeComponents = line.split(",");
+                if (placeComponents.length == 5) {
+                    String name = placeComponents[0];
+                    String type = placeComponents[1];
+                    Double price = Double.parseDouble(placeComponents[2]);
+                    Double latitude = Double.parseDouble(placeComponents[3]);
+                    Double longitude = Double.parseDouble(placeComponents[4]);
                     Place place = new Place(name, type, price, latitude, longitude);
                     loadedPlaces.add(place);
-                    addToOverlay(loadedPlaces, mapMarkers);
-                    Toast.makeText(this, "Local load complete", Toast.LENGTH_SHORT).show();
                 }
             }
-            reader.close();
+            bufferedReader.close();
+            addToOverlay(loadedPlaces);
+            Toast.makeText(this, "Local load successful", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
-            new AlertDialog.Builder(this).setPositiveButton("OK", null).
-                    setMessage("ERROR: " + e).show();
+            new AlertDialog.Builder(this).setPositiveButton("OK", null).setMessage("ERROR: " + e).show();
         }
     }
 
@@ -261,24 +257,25 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             try {
                 URL url = new URL("https://www.hikar.org/course/ws/get.php?year=20&username=user008&format=csv");
                 conn = (HttpURLConnection) url.openConnection();
-                InputStream in = conn.getInputStream();
+                InputStream inputStream = conn.getInputStream();
                 if (conn.getResponseCode() == 200) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
-                    String line = "";
-                    while ((line = br.readLine()) != null) {
-                        String[] ptsComponents = line.split(",");
-                        if (ptsComponents.length == 5) {
-                            String name = ptsComponents[0];
-                            String type = ptsComponents[1];
-                            Double price = Double.parseDouble(ptsComponents[2]);
-                            Double latitude = Double.parseDouble(ptsComponents[4]);
-                            Double longitude = Double.parseDouble(ptsComponents[3]);
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        String[] placeComponents = line.split(",");
+                        if (placeComponents.length == 5) {
+                            String name = placeComponents[0];
+                            String type = placeComponents[1];
+                            Double price = Double.parseDouble(placeComponents[2]);
+                            Double latitude = Double.parseDouble(placeComponents[4]);
+                            Double longitude = Double.parseDouble(placeComponents[3]);
                             Place place = new Place(name, type, price, latitude, longitude);
                             MainActivity.this.loadedPlaces.add(place);
                         }
                     }
-                    MainActivity.this.addToOverlay(loadedPlaces, mapMarkers);
-                    return "Remote load completed";
+                    bufferedReader.close();
+                    MainActivity.this.addToOverlay(loadedPlaces);
+                    return "Remote load successful";
                 } else {
                     return "HTTP ERROR: " + conn.getResponseCode();
                 }
@@ -292,21 +289,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
 
         public void onPostExecute(String result) {
-            new AlertDialog.Builder(MainActivity.this).setMessage(result).
-                    setPositiveButton("OK", null).show();
+            new AlertDialog.Builder(MainActivity.this).setMessage(result).setPositiveButton("OK", null).show();
         }
     }
 
     class InnerRemoteSave extends AsyncTask<Void, Void, String> {
+
         public String doInBackground(Void... unused) {
             HttpURLConnection conn = null;
             try {
                 URL url = new URL("https://www.hikar.org/course/ws/add.php");
-                Integer unsavedPlacesSize = MainActivity.this.unsavedPlaces.size();
-                System.out.println(unsavedPlacesSize);
-                String all = "";
-                for (Integer i = 0; i < unsavedPlacesSize; i++) {
-                    Place place = MainActivity.this.unsavedPlaces.get(i);
+                StringBuilder connResponse = new StringBuilder();
+                for (Place place : MainActivity.this.unsavedPlaces) {
                     String name = place.getName();
                     String type = place.getType();
                     Double price = place.getPrice();
@@ -316,21 +310,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     conn = (HttpURLConnection) url.openConnection();
                     conn.setDoOutput(true);
                     conn.setFixedLengthStreamingMode(postData.length());
-                    OutputStream out = null;
-                    out = conn.getOutputStream();
-                    out.write(postData.getBytes());
+                    OutputStream outputStream = conn.getOutputStream();
+                    outputStream.write(postData.getBytes());
                     if (conn.getResponseCode() == 200) {
-                        InputStream in = conn.getInputStream();
-                        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-                        String line = "";
-                        while ((line = br.readLine()) != null)
-                            all += line;
+                        InputStream inputStream = conn.getInputStream();
+                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null)
+                            connResponse.append(line);
                     } else {
                         return "HTTP ERROR: " + conn.getResponseCode();
                     }
-                    conn.disconnect();
                 }
-                return "Remote save completed";
+                return "Remote save successful " + connResponse.toString();
             } catch (IOException e) {
                 return e.toString();
             } finally {
@@ -341,8 +333,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
 
         public void onPostExecute(String result) {
-            new AlertDialog.Builder(MainActivity.this).setMessage(result).
-                    setPositiveButton("OK", null).show();
+            new AlertDialog.Builder(MainActivity.this).setMessage(result).setPositiveButton("OK", null).show();
         }
     }
 }

@@ -15,46 +15,50 @@ public class AddNewActivity extends AppCompatActivity implements View.OnClickLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_new);
-
-        //get a reference to the auto complete text view in the layout.
-        AutoCompleteTextView textView = (AutoCompleteTextView) findViewById(R.id.autocomplete_type);
-
-        //get the string array
+        AutoCompleteTextView textView = findViewById(R.id.autocomplete_type);
         String[] countries = getResources().getStringArray(R.array.types_array);
-
-        //create the adapter and set it to the auto complete text view.
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, countries);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, countries);
         textView.setAdapter(adapter);
-
-        Button addbtn = (Button) findViewById(R.id.addbtn);
+        Button addbtn = findViewById(R.id.addbtn);
         addbtn.setOnClickListener(this);
     }
 
     public void onClick(View v) {
-
+        String name = "";
+        String type = "";
+        Double price = null;
         Intent intent = new Intent();
         Bundle bundle = new Bundle();
-
-        EditText inputName = (EditText) findViewById(R.id.input_name);
-        String name = inputName.getText().toString();
-
-        AutoCompleteTextView inputType = (AutoCompleteTextView) findViewById(R.id.autocomplete_type);
-        String type = inputType.getText().toString();
-
-        EditText inputPrice = (EditText) findViewById(R.id.input_price);
-        Double price = Double.parseDouble(inputPrice.getText().toString());
-
-        bundle.putString("name", name);
-        bundle.putString("type", type);
-        bundle.putDouble("price", price);
-        intent.putExtras(bundle);
-
-        if (intent.getExtras().getString("name") != null && intent.getExtras().getString("type") != null && intent.getExtras().getDouble("price") != 0.0) {
+        EditText inputName = findViewById(R.id.input_name);
+        AutoCompleteTextView inputType = findViewById(R.id.autocomplete_type);
+        EditText inputPrice = findViewById(R.id.input_price);
+        if (inputName.getText().toString().trim().isEmpty()) {
+            inputName.setError("Please enter a name");
+            inputName.setHint("Raffles Hotel");
+        } else {
+            name = inputName.getText().toString().trim();
+        }
+        if (inputType.getText().toString().trim().isEmpty()) {
+            inputType.setError("Please enter a type");
+            inputType.setHint("Hotel");
+        } else {
+            type = inputType.getText().toString().trim();
+        }
+        if (inputPrice.getText().toString().trim().isEmpty()) {
+            inputPrice.setError("Please enter a price");
+            inputPrice.setHint("425.00");
+        } else {
+            price = Double.valueOf(inputPrice.getText().toString().trim());
+        }
+        if (name.equals("") || type.equals("") || price == null) {
             setResult(RESULT_OK, intent);
         } else {
-            setResult(RESULT_CANCELED, intent);
+            bundle.putString("name", name);
+            bundle.putString("type", type);
+            bundle.putDouble("price", price);
+            intent.putExtras(bundle);
+            setResult(RESULT_OK, intent);
+            finish();
         }
-        finish();
     }
 }

@@ -16,11 +16,13 @@ public class AddNewActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_new);
 
-        // Get a reference to the AutoCompleteTextView in the layout
+        //get a reference to the auto complete text view in the layout.
         AutoCompleteTextView textView = (AutoCompleteTextView) findViewById(R.id.autocomplete_type);
-        // Get the string array
+
+        //get the string array
         String[] countries = getResources().getStringArray(R.array.types_array);
-        // Create the adapter and set it to the AutoCompleteTextView
+
+        //create the adapter and set it to the auto complete text view.
         ArrayAdapter<String> adapter =
                 new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, countries);
         textView.setAdapter(adapter);
@@ -53,7 +55,6 @@ public class AddNewActivity extends AppCompatActivity implements View.OnClickLis
         } else {
             setResult(RESULT_CANCELED, intent);
         }
-
         finish();
     }
 }

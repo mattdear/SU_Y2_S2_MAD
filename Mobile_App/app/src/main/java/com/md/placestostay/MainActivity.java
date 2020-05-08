@@ -28,7 +28,6 @@ import org.osmdroid.views.overlay.OverlayItem;
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         mv.getController().setZoom(16.0);
         mv.getController().setCenter(new GeoPoint(51.05, -0.72));
 
-        //To make it so when you click on a place to stay it shows you its information.
+        //to make it so when you click on a place to stay it shows you its information.
         markerGestureListener = new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
             public boolean onItemLongPress(int i, OverlayItem item) {
                 Toast.makeText(MainActivity.this, item.getSnippet(), Toast.LENGTH_LONG).show();
@@ -85,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
         };
 
-        //creates the overlays
+        //creates the overlays.
         mapMarkers = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
 
         //links overlays to map.
@@ -162,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         return false;
     }
 
-    //this actions the returned intent from the child activity's
+    //this actions the returned intent from other activity's.
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
         if (requestCode == 0) {
@@ -207,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     public void savePTSLocally() {
         try {
-            PrintWriter pw = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt",true));
+            PrintWriter pw = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt", true));
             Integer unsavedPlacesSize = unsavedPlaces.size();
             for (Integer i = 0; i < unsavedPlacesSize; i++) {
                 Place place = unsavedPlaces.get(i);
@@ -343,5 +342,4 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     setPositiveButton("OK", null).show();
         }
     }
-
 }

@@ -41,16 +41,16 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements LocationListener, View.OnClickListener {
 
     MapView mv;
-    ArrayList<Place> unsavedPlaces = new ArrayList<>();
-    ArrayList<Place> loadedPlaces = new ArrayList<>();
+    ArrayList<Place> placesToStay = new ArrayList<>();
+    //    ArrayList<Place> loadedPlaces = new ArrayList<>();
     ItemizedIconOverlay<OverlayItem> mapMarkers;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
     Double gpsLat = null;
     Double gpsLon = null;
-    boolean autoLocalSave = false;
-    boolean autoLocalLoad = false;
-    boolean autoRemoteSave = false;
-    boolean autoRemoteLoad = false;
+    boolean autoSave = false;
+//    boolean autoLocalLoad = false;
+//    boolean autoRemoteSave = false;
+//    boolean autoRemoteLoad = false;
     DecimalFormat df = new DecimalFormat("#.00");
 
     @Override
@@ -95,17 +95,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onResume() {
         super.onResume();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        autoLocalSave = prefs.getBoolean("auto_local_save", false);
-        autoLocalLoad = prefs.getBoolean("auto_local_load", false);
-        autoRemoteSave = prefs.getBoolean("auto_remote_save", false);
-        autoRemoteLoad = prefs.getBoolean("auto_remote_load", false);
-        if (autoLocalLoad) {
-            loadLocalPTS();
-        }
-        if (autoRemoteLoad) {
-            InnerRemoteLoad remoteLoad = new InnerRemoteLoad();
-            remoteLoad.execute();
-        }
+        autoSave = prefs.getBoolean("auto_local_save", false);
+//        autoLocalLoad = prefs.getBoolean("auto_local_load", false);
+//        autoRemoteSave = prefs.getBoolean("auto_remote_save", false);
+//        autoRemoteLoad = prefs.getBoolean("auto_remote_load", false);
+//        if (autoLocalLoad) {
+//            loadLocalPTS();
+//        }
+//        if (autoRemoteLoad) {
+//            InnerRemoteLoad remoteLoad = new InnerRemoteLoad();
+//            remoteLoad.execute();
+//        }
     }
 
     //updates the map view base on GPS location.
@@ -179,19 +179,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     Double latitude = gpsLat;
                     Double longitude = gpsLon;
                     Place place = new Place(name, type, price, latitude, longitude);
-                    unsavedPlaces.add(place);
-                    addToOverlay(unsavedPlaces);
-                    if (autoLocalSave) {
+                    placesToStay.add(place);
+                    addToOverlay();
+                    if (autoSave) {
                         savePTSLocally();
-                    }
-                    if (autoRemoteSave) {
                         InnerRemoteSave remoteSave = new InnerRemoteSave();
                         remoteSave.execute();
                     }
-                    Toast.makeText(this, "New place added", Toast.LENGTH_SHORT).show();
+                    new AlertDialog.Builder(MainActivity.this).setMessage("New place " + name + " has been added.").setPositiveButton("OK", null).show();
+//                    Toast.makeText(this, "New place added", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(this, "Failed to add new place", Toast.LENGTH_SHORT).show();
+                new AlertDialog.Builder(MainActivity.this).setMessage("Failed to add new place").setPositiveButton("OK", null).show();
+//                Toast.makeText(this, "Failed to add new place", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -199,8 +199,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onClick(View v) {
     }
 
-    public void addToOverlay(ArrayList<Place> places) {
-        for (Place place : places) {
+    public void addToOverlay() {
+        for (Place place : placesToStay) {
             String title = place.getName();
             String snippet = "Name: " + place.getName() + "\n" + "Type: " + place.getType() + "\n" + "Price: £" + df.format(place.getPrice());
             mapMarkers.addItem(new OverlayItem(title, snippet, new GeoPoint(place.getLatitude(), place.getLongitude())));
@@ -209,8 +209,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     public void savePTSLocally() {
         try {
-            PrintWriter printWriter = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt", true));
-            for (Place place : unsavedPlaces) {
+            PrintWriter printWriter = new PrintWriter(new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath() + "/PlacesToStay.txt", false));
+            for (Place place : placesToStay) {
                 String name = place.getName();
                 String type = place.getType();
                 Double price = place.getPrice();
@@ -219,7 +219,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 printWriter.println(name + "," + type + "," + price + "," + latitude + "," + longitude);
             }
             printWriter.close();
-            Toast.makeText(this, "Local save successful", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(MainActivity.this).setMessage("Local save successful").setPositiveButton("OK", null).show();
+//            Toast.makeText(this, "Local save successful", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             new AlertDialog.Builder(this).setPositiveButton("OK", null).setMessage("ERROR: " + e).show();
         }
@@ -239,12 +240,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     Double latitude = Double.parseDouble(placeComponents[3]);
                     Double longitude = Double.parseDouble(placeComponents[4]);
                     Place place = new Place(name, type, price, latitude, longitude);
-                    loadedPlaces.add(place);
+                    placesToStay.add(place);
                 }
             }
             bufferedReader.close();
-            addToOverlay(loadedPlaces);
-            Toast.makeText(this, "Local load successful", Toast.LENGTH_SHORT).show();
+            addToOverlay();
+            new AlertDialog.Builder(MainActivity.this).setMessage("Local load successful").setPositiveButton("OK", null).show();
+//            Toast.makeText(this, "Local load successful", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             new AlertDialog.Builder(this).setPositiveButton("OK", null).setMessage("ERROR: " + e).show();
         }
@@ -270,11 +272,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                             Double latitude = Double.parseDouble(placeComponents[4]);
                             Double longitude = Double.parseDouble(placeComponents[3]);
                             Place place = new Place(name, type, price, latitude, longitude);
-                            MainActivity.this.loadedPlaces.add(place);
+                            MainActivity.this.placesToStay.add(place);
                         }
                     }
                     bufferedReader.close();
-                    MainActivity.this.addToOverlay(loadedPlaces);
+                    MainActivity.this.addToOverlay();
                     return "Remote load successful";
                 } else {
                     return "HTTP ERROR: " + conn.getResponseCode();
@@ -300,7 +302,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             try {
                 URL url = new URL("https://www.hikar.org/course/ws/add.php");
                 StringBuilder connResponse = new StringBuilder();
-                for (Place place : MainActivity.this.unsavedPlaces) {
+                for (Place place : MainActivity.this.placesToStay) {
                     String name = place.getName();
                     String type = place.getType();
                     Double price = place.getPrice();

@@ -42,15 +42,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     MapView mv;
     ArrayList<Place> placesToStay = new ArrayList<>();
-    //    ArrayList<Place> loadedPlaces = new ArrayList<>();
     ItemizedIconOverlay<OverlayItem> mapMarkers;
     ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
     Double gpsLat = null;
     Double gpsLon = null;
     boolean autoSave = false;
-//    boolean autoLocalLoad = false;
-//    boolean autoRemoteSave = false;
-//    boolean autoRemoteLoad = false;
     DecimalFormat df = new DecimalFormat("#.00");
 
     @Override
@@ -75,12 +71,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         //to make it so when you click on a place to stay it shows you its information.
         markerGestureListener = new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
             public boolean onItemLongPress(int i, OverlayItem item) {
-                Toast.makeText(MainActivity.this, item.getSnippet(), Toast.LENGTH_LONG).show();
+                new AlertDialog.Builder(MainActivity.this).setMessage(item.getSnippet()).setPositiveButton("OK", null).show();
                 return true;
             }
 
             public boolean onItemSingleTapUp(int i, OverlayItem item) {
-                Toast.makeText(MainActivity.this, item.getSnippet(), Toast.LENGTH_LONG).show();
+                new AlertDialog.Builder(MainActivity.this).setMessage(item.getSnippet()).setPositiveButton("OK", null).show();
                 return true;
             }
         };
@@ -96,16 +92,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         super.onResume();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         autoSave = prefs.getBoolean("auto_local_save", false);
-//        autoLocalLoad = prefs.getBoolean("auto_local_load", false);
-//        autoRemoteSave = prefs.getBoolean("auto_remote_save", false);
-//        autoRemoteLoad = prefs.getBoolean("auto_remote_load", false);
-//        if (autoLocalLoad) {
-//            loadLocalPTS();
-//        }
-//        if (autoRemoteLoad) {
-//            InnerRemoteLoad remoteLoad = new InnerRemoteLoad();
-//            remoteLoad.execute();
-//        }
     }
 
     //updates the map view base on GPS location.
@@ -186,12 +172,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         InnerRemoteSave remoteSave = new InnerRemoteSave();
                         remoteSave.execute();
                     }
-                    new AlertDialog.Builder(MainActivity.this).setMessage("New place " + name + " has been added.").setPositiveButton("OK", null).show();
-//                    Toast.makeText(this, "New place added", Toast.LENGTH_SHORT).show();
+                    new AlertDialog.Builder(MainActivity.this).setMessage(name + " has been added.").setPositiveButton("OK", null).show();
                 }
             } else {
-                new AlertDialog.Builder(MainActivity.this).setMessage("Failed to add new place").setPositiveButton("OK", null).show();
-//                Toast.makeText(this, "Failed to add new place", Toast.LENGTH_SHORT).show();
+                new AlertDialog.Builder(MainActivity.this).setMessage("Failed to add new place.").setPositiveButton("OK", null).show();
             }
         }
     }
@@ -219,8 +203,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 printWriter.println(name + "," + type + "," + price + "," + latitude + "," + longitude);
             }
             printWriter.close();
-            new AlertDialog.Builder(MainActivity.this).setMessage("Local save successful").setPositiveButton("OK", null).show();
-//            Toast.makeText(this, "Local save successful", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(MainActivity.this).setMessage("Save to file successful.").setPositiveButton("OK", null).show();
         } catch (IOException e) {
             new AlertDialog.Builder(this).setPositiveButton("OK", null).setMessage("ERROR: " + e).show();
         }
@@ -245,8 +228,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
             bufferedReader.close();
             addToOverlay();
-            new AlertDialog.Builder(MainActivity.this).setMessage("Local load successful").setPositiveButton("OK", null).show();
-//            Toast.makeText(this, "Local load successful", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(MainActivity.this).setMessage("Load from file successful.").setPositiveButton("OK", null).show();
         } catch (IOException e) {
             new AlertDialog.Builder(this).setPositiveButton("OK", null).setMessage("ERROR: " + e).show();
         }
@@ -277,7 +259,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     }
                     bufferedReader.close();
                     MainActivity.this.addToOverlay();
-                    return "Remote load successful";
+                    return "Load from web successful.";
                 } else {
                     return "HTTP ERROR: " + conn.getResponseCode();
                 }
@@ -324,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         return "HTTP ERROR: " + conn.getResponseCode();
                     }
                 }
-                return "Remote save successful " + connResponse.toString();
+                return "Save to web successful.";
             } catch (IOException e) {
                 return e.toString();
             } finally {

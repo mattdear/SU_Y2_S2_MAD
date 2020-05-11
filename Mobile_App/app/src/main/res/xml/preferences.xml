@@ -5,30 +5,4 @@
         android:key="auto_local_save"
         android:summary="@string/auto_save_summary"
         android:title="@string/auto_save_title" />
-
-
-
-
-
-
-    <!--<CheckBoxPreference-->
-        <!--android:defaultValue="false"-->
-        <!--android:key="auto_local_save"-->
-        <!--android:summary="@string/auto_local_save_summary"-->
-        <!--android:title="@string/auto_local_save_title" />-->
-    <!--<CheckBoxPreference-->
-        <!--android:defaultValue="false"-->
-        <!--android:key="auto_local_load"-->
-        <!--android:summary="@string/auto_local_load_summary"-->
-        <!--android:title="@string/auto_local_load_title" />-->
-    <!--<CheckBoxPreference-->
-        <!--android:defaultValue="false"-->
-        <!--android:key="auto_remote_save"-->
-        <!--android:summary="@string/auto_remote_save_summary"-->
-        <!--android:title="@string/auto_remote_save_title" />-->
-    <!--<CheckBoxPreference-->
-        <!--android:defaultValue="false"-->
-        <!--android:key="auto_remote_load"-->
-        <!--android:summary="@string/auto_remote_load_summary"-->
-        <!--android:title="@string/auto_remote_load_title" />-->
 </PreferenceScreen>

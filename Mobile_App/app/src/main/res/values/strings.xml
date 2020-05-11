@@ -20,14 +20,6 @@
     <string name="load">Load from file</string>
     <string name="remoteload">Load from web</string>
     <string name="remotesave">Save to web</string>
-    <string name="auto_local_save_title">Automatic save to file</string>
-    <string name="auto_local_load_title">Automatic load from file</string>
-    <string name="auto_remote_save_title">Automatic save to web</string>
-    <string name="auto_remote_load_title">Automatic load from web</string>
-    <string name="auto_local_save_summary">Turn on/off the automatic saving of places to a local file.</string>
-    <string name="auto_local_load_summary">Turn on/off the automatic loading of places from a local file.</string>
-    <string name="auto_remote_save_summary">Turn on/off the automatic saving of places to the web.</string>
-    <string name="auto_remote_load_summary">Turn on/off the automatic loading of places from the web.</string>
     <string name="preferences">Preferences</string>
     <string name="auto_save_title">Automatic Save</string>
     <string name="auto_save_summary">Turn on/off the automatic saving of places to a file and to the web.</string>

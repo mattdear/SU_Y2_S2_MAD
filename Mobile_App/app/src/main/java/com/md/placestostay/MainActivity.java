@@ -167,12 +167,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     Place place = new Place(name, type, price, latitude, longitude);
                     placesToStay.add(place);
                     addToOverlay();
+                    new AlertDialog.Builder(MainActivity.this).setMessage(name + " has been added.").setPositiveButton("OK", null).show();
                     if (autoSave) {
                         savePTSLocally();
                         InnerRemoteSave remoteSave = new InnerRemoteSave();
                         remoteSave.execute();
                     }
-                    new AlertDialog.Builder(MainActivity.this).setMessage(name + " has been added.").setPositiveButton("OK", null).show();
                 }
             } else {
                 new AlertDialog.Builder(MainActivity.this).setMessage("Failed to add new place.").setPositiveButton("OK", null).show();
@@ -306,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         return "HTTP ERROR: " + conn.getResponseCode();
                     }
                 }
-                return "Save to web successful.";
+                return "Save to web successful.\n\n" + connResponse;
             } catch (IOException e) {
                 return e.toString();
             } finally {

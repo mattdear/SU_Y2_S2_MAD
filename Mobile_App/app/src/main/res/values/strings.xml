@@ -7,10 +7,7 @@
     <string-array name="types_array">
         <item>Hotel</item>
         <item>Resort</item>
-        <item>Boutique Hotel</item>
         <item>Villa</item>
-        <item>Guest House</item>
-        <item>Bed and Breakfast</item>
         <item>Hostel</item>
         <item>Camping</item>
     </string-array>

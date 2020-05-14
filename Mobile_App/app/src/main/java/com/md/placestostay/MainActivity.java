@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         //defines the map view and sets the initial GPS location.
         mv = findViewById(R.id.map1);
         mv.setMultiTouchControls(true);
-        mv.getController().setZoom(20.0);
+        mv.getController().setZoom(16.0);
         mv.getController().setCenter(new GeoPoint(51.05, -0.72));
 
         //to make it so when you click on a place to stay it shows you its information.

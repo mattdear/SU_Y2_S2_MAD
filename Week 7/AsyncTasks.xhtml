@@ -1,0 +1,695 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development Part 9: AsyncTasks </title>
+<link rel="stylesheet" type="text/css" href="./AsyncTasks_files/android.css" />
+</head>
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 9</h1>
+<h1>AsyncTask and Network Communication</h1>
+</div>
+
+<p>In this topic we will:
+    <ul>
+    <li>Look at an easy way of doing multithreading with <em>AsyncTask</em></li>
+	<li>Use AsyncTask to perform <em>network communication</em></li>
+    </ul>
+</p>
+
+<p><em>Multithreading</em> is the idea of running processes in parallel. For
+example we might wish to run a task in the background without interrupting the
+main GUI. 
+In Android, multithreading is particularly important as the user will not want
+their device to be locked up and unusable while waiting for a time-consuming task (such as network communication) to complete. Therefore, any time-consuming
+task must be placed in a separate thread, rather than the main thread (known as the UI - user interface - thread) of the application.
+(In fact, Android will auto-detect such time-consuming tasks and present an <em>Application Not Responding</em>
+error if they are placed in the main thread).</p>
+<p>However, in Android we do not have to create raw threads from first principles.
+There is an easier way of doing background
+tasks, which wraps the complexities of multithreading, and that is the <em>AsyncTask</em> class. An <em>AsyncTask</em> (asynchronous task)
+is a class which represents a background task that the application needs to do. When you use an AsyncTask, a new thread is 
+automatically created. You could use an AsyncTask for saving to file, for instance,
+or communicating across a network. So how do you create an AsyncTask? You create your own class which inherits from AsyncTask and add
+the following three methods to it:
+    <ul>
+    <li>onPreExecute(): code to run <em>before</em> the background task begins. This runs in the main thread of the application.</li>
+    <li>doInBackground(): code for the actual background task itself. This runs in a separate thread.</li>
+    <li>onPostExecute(): code to run <em>after</em> the background task ends. This runs in the main thread again.</li> 
+    </ul>
+</p>
+
+<p>An important point to note in Android is that <em>user interface elements cannot be displayed in the background thread</em>.
+They must be displayed in the <em>main, UI thread</em>. Therefore, any code which shows or hides dialogs or other UI elements
+must go in <em>onPreExecute()</em> or <em>onPostExecute()</em>, and not in <em>doInBackground()</em>.</p>
+
+<p>Here is an example of an AsyncTask which is being used to communicate
+across the network. For the moment, the actual network communication code
+is being left out (it will be added later), but it shows you the structure
+of how an AsyncTask works.
+<pre>
+import android.os.AsyncTask;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import android.content.Context;
+import android.app.AlertDialog;
+import android.os.Environment;
+
+public class TestTask extends AsyncTask&lt;Void,Void,String&gt;
+{
+
+    Context parent;
+    
+    public TestTask(Context p)
+    {
+        
+        parent = p;
+    }
+
+    
+    public String doInBackground(Void... unused)
+    {
+        String message = "Successfully downloaded!";
+        try
+        {
+            // Network communication would go here;
+        }
+        catch(IOException e)
+        {
+            message = e.toString();
+        }
+        return message;
+    }
+    
+    public void onPostExecute(String message)
+    {
+        new AlertDialog.Builder(parent).setMessage(message).
+            setPositiveButton("OK",null).show();
+    }
+}
+</pre>
+To explain the code:
+<ul>
+<li>The three methods inside the AsyncTask, <em>onPreExecute()</em> (not included here as no pre-execution initialisation needs to be done), 
+    <em>doInBackground()</em> and <em>onPostExecute()</em>
+    run one after the other. Note that <em>onPreExecute()</em> and <em>onPostExecute()</em> run in the main UI thread whereas
+    <em>doInBackground()</em> runs in a separate thread. This means that <em>onPreExecute()</em> and <em>onPostExecute()</em> can include code
+    to display GUI elements, such as AlertDialogs.</li>
+    <li>Note how we specify that our custom TestTask class extends <em>AsyncTask&lt;Void,Void,String&gt;</em>. What does the
+    &lt;Void,Void,String&gt; mean? This is a Java feature called <em>generics</em> which allows you to create a "template" class which can use data with different
+    data types depending on what is specified - you have already seen an example of this with ArrayLists in which you specify the data type the
+    ArrayList will hold (e.g. ArrayList<em>&lt;String&gt;</em>). What do the three data types here represent?
+        <ul>
+        <li>The first (Void here) represents the data type of the <em>input</em> to the AsyncTask. This input is the parameter to 
+        <em>doInBackground()</em>. This might for example be a user-
+        defined filename. Here, however, there is no input to the AsyncTask - the filename is always "asynctest.txt" - so we specify
+        that it's Void (note with a capital V) to represent this. (These data types must be class names, and each primitive type -
+        including <em>void</em>, has a corresponding <em>wrapper class</em>, e.g. <em>Void</em>. Another example: <em>int</em> has a wrapper class
+        <em>Integer</em>. We will return to this topic later)</li>
+        <li>The second (Void again) represents the data type of a variable that can be used to indicate the progress of the AsyncTask,
+        which could be used to display a progress bar for example. Here we are not showing progress, so this is left as Void once 
+        again.</li>
+        <li>The third (String) represents the data type of the <em>return value</em> of the <em>doInBackground()</em> method. This can
+        be used to easily pass a message from the background task to the rest of the program. Here it is String, because we are
+        returning a status message from <em>doInBackground()</em> method. This status message will be either the message 
+        "Successfully downloaded!" 
+    or the message associated with the IOException. </li>
+        <li>Note that this return value from <em>doInBackground()</em> is then
+        <em>automatically passed to the onPostExecute() method as a parameter</em>. Here, we are
+        displaying the status message in an AlertDialog in <em>onPostExecute()</em>. We have to do this in <em>onPostExecute()</em> as 
+        <em>doInBackground()</em> runs in a separate thread. As we saw above, this is because UI elements such as AlertDialog cannot be displayed in
+        separate, non-UI threads.</li>
+        </ul>
+    </li>
+</ul>
+</p>
+<p>
+The AsyncTask object would be created in another part of your application, such as in the main Activity, and then called with the
+<em>execute()</em> method. The <em>execute()</em> method would start the AsyncTask off.
+<pre>
+public void MyActivity extends AppCompatActivity
+{
+    // other activity code omitted...
+    
+    // Example onClick() which would be linked to a button press
+    public void onClick(View view)
+    {
+        TestTask task = new TestTask(this);
+        task.execute();
+    }
+}
+</pre>
+How is this working?
+    <ul>
+    <li>In the activity, we create the AsyncTask, passing the current activity to it (needed to display the AlertDialog in the
+    AsyncTask). This is passed in as a parameter of data type <em>Context</em>; 
+    Context is the superclass of Activity but a few other things (such as the
+    application as a whole) can also be Contexts.</li>
+    <li>We then call <em>execute()</em> to start the AsyncTask running. This will automatically create a separate thread to run the
+    AsyncTask in.</li>
+    
+    </ul>
+</p>
+<h3>Passing parameters to the AsyncTask</h3>
+<p>The next example shows how you can pass parameters to the AsyncTask. Here, we want to pass a user-defined URL in to the AsyncTask.
+<pre>
+import android.os.AsyncTask;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import android.content.Context;
+import android.app.AlertDialog;
+import android.os.Environment;
+
+public class TestTask2 extends AsyncTask&lt;String,Void,String&gt;
+{
+
+    Context parent;
+    
+    public TestTask2(Context p)
+    {
+        
+        parent = p;
+    }
+    
+    public String doInBackground(String... urls)
+    {
+        String message = "Successfully downloaded!";
+        try
+        {
+            String urlToDownloadFrom = urls[0];
+            // Download from that URL...
+        }
+        catch(IOException e)
+        {
+            message = e.toString();
+        }
+        return message;
+    }
+    
+    public void onPostExecute(String message)
+    {
+        new AlertDialog.Builder(parent).setMessage(message).
+            setPositiveButton("OK",null).show();
+    }
+}
+</pre>
+The AsyncTask would be created in another part of your application, such as in the main Activity, and then called with the
+<em>execute()</em> method:
+<pre>
+public void MyActivity extends AppCompatActivity
+{
+    // other activity code omitted...
+    
+    // Example onClick() which would be linked to a button press
+    public void onClick(View view)
+    {
+        TestTask2 task = new TestTask2(this);
+        task.execute("https://hikar.org/index.php");
+    }
+}
+</pre>
+Note the differences in this example:
+    <ul>
+    <li>The <em>TestTask2</em> class now extends <em>AsyncTask&lt;String,Void,String&gt;</em>
+    rather than AsyncTask&lt;Void,Void,String&gt;. This indicates that the <em>doInBackground()</em> method now takes an input
+    parameter of type String - the filename to save to.</li>
+    <li>Note how the data type of the parameter to <em>doInBackground()</em> is     <em>String...</em>.
+    This is a new Java language feature that you have not seen yet - <em>variable arguments</em>. Even though there is only
+    one specified parameter, a variable number of values (or <em>arguments</em>) can be passed in to the method from outside. So you can
+    actually pass as many Strings into the method as you like. The variable <em>filename</em> is actually an <em>array</em> of
+    Strings; each argument to the method will be stored in this array.</li>
+    <li>We pass these arguments into the <em>execute</em> method which in turn passes them on to <em>doInBackground()</em>.
+    In this case, we only pass in one - the URL - but
+    the parameter to <em>doInBackground()</em> will still be an array, with just one member - the URL. Consequently, to obtain the actual filename we
+    need to use <em>filename[0]</em>, the first member of the array. </li>
+    <li>However if we tried to do
+    <pre>task.execute("blah1","blah2");</pre>
+    this would still be acceptable to the compiler as <em>doInBackground()</em> (which <em>execute()</em> calls) takes a variable arguments
+    parameter. In this case, the variable <em>filename</em> would be an array with two members, the string "blah1" and the string
+    "blah2".</li>
+    </ul>
+</p>
+
+<h2>AsyncTasks as inner classes</h2>
+<p>
+It can be more convenient to have the AsyncTask as an <em>inner class</em>, as it gives the AsyncTask access to all the attributes of the
+enclosing Activity. Here is an example of an AsyncTask inside an activity:
+<pre>
+import android.support.v7.app.AppCompatActivity;
+import android.os.AsyncTask;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import android.content.Context;
+import android.app.AlertDialog;
+import android.os.Environment;
+
+public class MyActivity extends AppCompatActivity
+{
+  class InnerTestTask extends AsyncTask&lt;String,Void,String&gt;
+  {
+    public String doInBackground(String... urls)
+    {
+        String message = "Successfully downloaded!";
+        try
+        {
+            String urlToDownloadFrom = urls[0];
+            // Download from that URL...
+        }
+        catch(IOException e)
+        {
+            message = e.toString();
+        }
+        return message;
+    }
+    
+    public void onPostExecute(String message)
+    {
+        new AlertDialog.Builder(<em>MyActivity.this</em>).setMessage(message).
+            setPositiveButton("OK",null).show();
+    }
+  }
+  
+  // rest of activity code, omitted
+
+    // Example onClick() which would be linked to a button press
+    public void onClick(View view)
+    {
+        InnerTestTask task = new InnerTestTask();
+
+        // this could also be read in from the UI
+        String filename = Environment.getExternalStorageDirectory().
+            getAbsolutePath()+"/async2.txt"; 
+        task.execute(filename);
+    }
+}
+</pre>
+Note here how we <em>no longer need to pass the activity into the AsyncTask as a parameter</em> because the
+AsyncTask is an <em>inner class</em>, inside the Activity, which means
+we can access the Activity directly. 
+Note how we refer to the activity inside the
+AsyncTask as <em>MyActivity.this</em>. We cannot use simply <em>this</em>
+as that would refer to the inner class. 
+By preceding <em>this</em> with the outer class's name, <em>MyActivity</em>,
+we can access the outer, enclosing class, i.e. the activity. 
+</p>
+<h3>Beware! - leaking context (aka leaking the activity reference)</h3>
+<p>Note that for both these methods (inner class and separate class) there
+is a "gotcha" in that the AsyncTask contains a reference to the parent
+Activity. In a separate class this is explicitly declared, but <strong>in inner classes,
+there is always a hidden reference to the outer class, which in our case will
+be the Activity.</strong></p>
+<p>
+In some circumstances the parent Activity can be destroyed and
+re-created (e.g. when the device is rotated) and unless the reference to the
+Activity is set to null, there will be a memory leak as the AsyncTask is still
+holding a reference to the old Activity. In EMA next year we will examine
+ways to deal with this problem, but for now, just be aware it is a potential
+problem and alter your &lt;activity&gt; tag in your manifest file to prevent 
+the activity restarting when it's rotated, e.g.
+<pre>&lt;activity android:name=".MainActivity" android:label="@string/app_name"
+<em>android:configChanges="orientation|keyboardHidden|screenSize"</em>&gt;
+</pre>
+</p>
+<p>
+To read more about this problem and potential solutions, see:
+<a href="http://www.androiddesignpatterns.com/2013/01/inner-class-handler-memory-leak.html">here</a>. This article refers to another Android class, the
+Handler, but the concept - inner classes containing "hidden" references to
+the outer class - remains relevant; and the suggested solution, making the
+inner class static and using a WeakReference, also applies to AsyncTasks.</p>
+<h2>Network Communication</h2>
+<p>We are now going to look at actually using AsyncTask to perform
+<em>network communication</em>.</p>
+<h3>Credits</h3>
+<p>The following article was used in researching this topic:
+<a href="http://www.tbray.org/ongoing/When/201x/2012/01/17/HttpURLConnection">Tim Bray, HttpURLConnection's Dark Secrets</a>.
+</p>
+<h3>Quick Introduction to Web Services</h3>
+<p>Most mobile apps
+obtain information from a web server of some kind. For 
+example, if you were developing a weather app, the actual weather data needs
+to be obtained over the network. This involves the app communicating with a script (for example, a PHP script) running on a web
+server. The app would send input to the script (e.g. a city) in an HTTP request, the script would look up data in the database (e.g. 
+a weather database) and send the results back to the app in an HTTP response. You have already met HTTP
+in DFTI; <a href="https://edward2.solent.ac.uk/course/resources.php?unit=dfti&amp;file=lecture1.xml">see here</a>.</p>
+<p>So what kind of data should the server-side script
+output? 
+HTML will be of little use, because HTML is aimed at web
+browsers, rather than the interfaces of mobile apps.
+You could in theory
+extract the relevant data from the HTML and re-format it, but that would
+be tricky as HTML is full of styling, formatting, layout, and so on and
+is thus hard to parse. What we need instead is
+a server-side application that delivers <em>pure data</em>, which can then
+be incorporated into <em>any</em> user interface. Such a server-side program
+is known as a <em>web service</em>. There are various specialised formats that are
+used to represent the data output by web services, such as 
+<em>XML</em> and <em>JSON</em>. We will look at JSON later, but for now, we will just assume that the
+web service is generating the data as plain text.</p>
+<h3>Developing a Web Service Client App</h3>
+<p>First thing we need to do from the app is <em>contact the web service</em>. To do
+this, we need an <em>HTTP client library</em>, as what we are doing is
+communicating with the remote web service using HTTP. There are two libraries available for HTTP communication:
+    <ul>
+    <li>The Apache HTTP library. This was the only option in early versions of Android.</li>
+    <li>HttpURLConnection. This is the modern HTTP library recommended for versions of Android from 2.3 upwards.
+    It is higher-level and therefore easier to work with than the Apache HTTP library.</li>
+    </ul>
+</p>
+<h4>Sending an HTTP GET request</h4>
+<p>We have already seen in DFTI that GET requests are used to fetch data over the web. We might send a GET 
+request to a PHP script to look up data from a database, for example. The following code example
+will send a GET request using HttpURLConnection:
+<pre>
+<![CDATA[
+package com.example.network;
+
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.os.AsyncTask;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+
+    class MyTask extends AsyncTask<Void,Void,String> 
+    {
+        public String doInBackground(Void... unused)
+        {
+            HttpURLConnection conn = null;
+            try
+            {
+                URL url = new URL("http://server.com/people.php");
+                 conn = (HttpURLConnection) url.openConnection();
+                InputStream in = conn.getInputStream();
+                if(conn.getResponseCode() == 200)
+                {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                    String result = "", line;
+                    while((line = br.readLine()) !=null)
+                    {
+                        result += line;
+                    }
+                    return result;
+                }
+                else
+                {
+                    return "HTTP ERROR: " + conn.getResponseCode();
+                }
+            }
+            catch(IOException e)
+            {
+                return e.toString();
+            }
+            finally
+            {
+                if(conn!=null)
+                {
+                    conn.disconnect();
+                }
+            }
+        }
+        
+        public void onPostExecute(String result)
+        {
+            EditText et1 = (EditText)findViewById(R.id.et1);
+            et1.setText(result);
+        }
+    }
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Button go = (Button)findViewById(R.id.go);
+        go.setOnClickListener(this);
+    }
+    
+    public void onClick(View v)
+    {
+        MyTask t = new MyTask();
+        t.execute();
+    }
+} ]]>
+</pre>
+</p>
+<p>How is this working? First of all note we use an AsyncTask; remember from last time that any time-consuming process (such as network
+communication) should be put in its own thread, and AsyncTask is an easy way to do this. Note however how we do not create a 
+separate class inheriting from AsyncTask. Instead we create what is known as an <em>anonymous class</em>. An anonymous class is a
+subclass without its own name; we create a variable with the data type of the <em>superclass</em> and 
+<em>override specific methods</em>. We can see we are doing this here with the code:
+<pre>
+<![CDATA[
+AsyncTask<Void,Void,String> downloadTask = new AsyncTask<Void,Void,String>()
+{
+    public String doInBackground(Void... unused)
+    {
+         ...
+    }
+  
+    public void onPostExecute (String result)
+    {
+        ...
+    }
+};
+]]>
+</pre>
+Here you can see that we are creating a variable <em>downloadTask</em> of type
+<em>AsyncTask&lt;Void,Void,String&gt;</em> which overrides the <em>doInBackground()</em> and
+<em>onPostExecute()</em> methods without defining a new class name. Hence <em>downloadTask</em> is
+an <em>anonymous</em> class.
+</p>
+<p>Moving onto the code within the
+<em>doInBackground()</em> method:
+    <ul>
+    <li>Note how the code is in a <em>try/catch</em> statement so we can catch any exceptions that might occur during the network communication
+    process.</li>
+    <li>First thing we do is to create an <em>URL</em> object to represent a URL:
+    <pre>URL url = new URL("http://server.com/people.php");</pre>
+    </li>
+    <li>Next we open a connection to the URL using our HttpURLConnection object:
+    <pre>connection = (HttpURLConnection)url.openConnection();</pre>
+    </li>
+    <li>Next we get an input stream to read data in from the URL:
+    <pre>InputStream in = connection.getInputStream();</pre>
+    </li>
+    <li>Next we test what HTTP code was returned. If a code other than 200 OK
+    (such as 404 Not Found, for example) was returned, there's been a server side
+    error so we don't want to process the results.
+    <pre>if(connection.getResponseCode()==200)</pre>
+    </li>
+    <li>If the code was 200, we create a <em>BufferedReader</em> from the
+    InputStream; remember that Readers allow us to read the text as Unicode.
+    First of all we convert the InputStream into a Reader using InputStreamReader and
+    then into a BufferedReader, to allow data to be buffered in memory as it is read in,
+    for efficiency. We then use the technique first seen in the File I/O topic to read in
+    each line, and (to keep things simple) add each line to the String <em>result</em>:
+    <pre>
+    BufferedReader b = new BufferedReader(new InputStreamReader(in));
+    while((line=b.readLine()) != null)
+    {
+        result += line;
+    }
+    </pre>
+    </li>
+    <li>We then <em>return</em> the result from the <em>doInBackground()</em> method;
+    remember that the return value of <em>doInBackground()</em> is automatically passed
+    to <em>onPostExecute()</em> as a parameter.</li>
+    <li>In <em>onPostExecute()</em> we display an alert dialog with the data from the 
+    URL (or the text of an exception, if there was one)</li>
+    <li>Note also the <em>finally</em> block. Remember from the exceptions topic that
+    a <em>finally</em> block runs whether an exception occurred or not. Here, we want
+    to disconnect from the URL, whether there was an error or not. Note how we
+    ensure that the HttpURLConnection object is not <em>null</em>; there is the 
+    possibility that the line
+    <pre>URL url = new URL("http://url");</pre>
+    generates a <em>MalformedURLException</em> (a subclass of <em>IOException</em>) if the
+    URL was invalid; and if that was the case, the HttpURLConnection object will never be
+    initialised and will remain <em>null</em>, so we don't want to disconnect from a null
+    object.</li>
+    </ul>
+</p>
+<h4>POST requests</h4>
+<p>We might also want to send a <em>POST</em> request. Remember that POST requests are used
+to <em>modify</em> data. In the case of an app, we might want the user to input some new data 
+on the device (e.g. a point of interest, or an address book contact) and then save it to a 
+server. In this case, we would send a POST request to a PHP script. Here is an example which
+will do this:
+<pre>
+<![CDATA[
+package com.example.networkpost;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.os.AsyncTask;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import android.app.AlertDialog;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+
+    class MyTask extends AsyncTask<Void,Void,String> 
+    {
+        public String doInBackground(Void... unused)
+        {
+            HttpURLConnection conn = null;
+            try
+            {
+                URL url = new URL("http://server.com/add_person.php");
+                 conn = (HttpURLConnection) url.openConnection();
+                 
+                 String postData = "name=Fred&dob=140462"
+                 // For POST 
+                 conn.setDoOutput(true);
+                 conn.setFixedLengthStreamingMode(postData.length());
+            
+                 OutputStream out = null;
+                 out = conn.getOutputStream();
+                 out.write(postData.getBytes());
+                if(conn.getResponseCode() == 200)
+                {
+                    InputStream in = conn.getInputStream();
+                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                    String all = "", line;
+                    while((line = br.readLine()) !=null)
+                        all += line;
+                    return all;
+                }
+                else
+                {
+                    return "HTTP ERROR: " + conn.getResponseCode();
+                }                
+            }
+            catch(IOException e)
+            {
+                return e.toString();
+            }
+            finally
+            {
+                if(conn!=null)
+                {
+                    conn.disconnect();
+                }
+            }
+        }
+        
+        public void onPostExecute(String result)
+        {
+            
+            new AlertDialog.Builder(MainActivity.this).
+                setMessage("Server sent back: " + result).
+                setPositiveButton("OK", null).show();
+        }
+    }
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Button go = (Button)findViewById(R.id.go);
+        go.setOnClickListener(this);
+    }
+    
+    public void onClick(View v)
+    {
+        MyTask t = new MyTask();
+        t.execute();
+    }
+}
+
+
+
+
+]]>
+</pre>
+Note that this code is similar to the GET request example but there are a few additional
+points to note:
+<ul>
+<li>We need to specify the data we are POSTing. We use the &amp; separated variable/value
+pairs for the POST data, similar to how a query string is done. Here the POST field
+names (equivalent to the <em>name</em> attributes of an HTML form with a method of "post")
+are <em>name</em> and <em>dob</em> and the values are <em>Fred</em> and <em>140462</em>.
+<pre>String postData = "name=Fred&amp;dob=140462"</pre>
+On the server side using PHP, this data would be read with $_POST["name"] and $_POST["dob"].
+</li>
+<li>We must specify we are <em>outputting from</em> our app
+<em>to</em> a server:
+<pre>connection.setDoOutput(true);</pre>
+</li>
+<li>This line should be added to improve performance 
+(ref: <a href="http://www.tbray.org/ongoing/When/201x/2012/01/17/HttpURLConnection">
+Tim Bray, HttpURLConnection's Dark Secrets</a>, 
+<a href="http://developer.android.com/reference/java/net/HttpURLConnection.html">Android docs</a>):
+<pre>connection.setFixedLengthStreamingMode(postData.length());</pre>
+</li>
+<li>We then open an <em>output</em> stream (because we are outputting
+<em>from</em> our app <em>to</em> the network:
+<pre>
+OutputStream out=null;        
+out = conn.getOutputStream();
+</pre>
+</li>
+<li>Now we send the data to the server. <em>postData</em> is a String but we must
+send the raw bytes, that is why we use the <em>getBytes()</em> method:
+<pre>out.write(postData.getBytes());</pre>
+</li>
+<li>If we get a 200 response, we then open an <em>input</em> stream to the server, as 
+before, so we can read any HTTP response text that the server might send back (this might
+contain status information, for example).</li>
+</ul>
+</p>
+<h2>Exercises</h2>
+<ol>
+<li>
+On freemap is a web service which delivers
+music data. Its address is <em>https://hikar.org/course/ws/hits.php</em> and
+expects one query string parameter, <em>artist</em>.
+For example, you can obtain all Madonna songs with:
+<pre>https://hikar.org/course/ws/hits.php?artist=Madonna</pre>.
+Write an Android app containing an EditText, a "Download" button and a TextView below which occupies the rest of the Activity.
+When the user clicks the "Download" button, it should 
+connect to the web service and display all the matching songs in the TextView.
+Initially, <em>always download songs by Oasis</em>; 
+ignore the entry in the EditText.
+</li>
+<li>Pass the artist that the user entered in the EditText into the AsyncTask 
+as a parameter, and change the code to search for all songs by the artist
+that the user entered, rather than Oasis.</li>
+<li>At
+<pre>https://hikar.org/course/ws/addhit.php</pre>
+is a PHP script to <em>add a new song</em> to the database. It takes the following
+POST fields:
+    <ul>
+    <li><em>song</em> - the song title;</li>
+    <li><em>artist</em> - the artist;</li>
+    <li><em>year</em> - the year of the song.</li>
+    </ul>
+Write a new app, or add a second Activity to the app above, to allow the user to enter the song, artist and year in EditTexts. The data
+should be sent as a POST request to the above script. <em>Pass the song, artist
+and year to the AsyncTask as parameters.</em> Test it worked by visiting
+<pre>https://hikar.org/course/ws/hits.php</pre>
+and see if the new song was added!</li>
+</ol>
+
+
+
+</body>
+</html>

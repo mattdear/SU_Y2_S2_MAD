@@ -1,0 +1,495 @@
+
+<!-- saved from url=(0050)https://edward2.solent.ac.uk/course/mad/part8.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Mobile Application Development: Part 8:
+File I/O</title>
+<link rel="stylesheet" type="text/css" href="./File I_O_files/android.css">
+</head>
+
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 8</h1>
+<h1>File I/O</h1>
+</div>
+
+<h2>Introduction</h2>
+
+<p>Today we will look at how to perform <em>file input/output (file I/O)</em> in Java.
+This will allow you to save data to file and load it back in again from your apps.
+Note that this topic is applicable to <em>any</em> Java applications: it will work on
+both Android and regular Java applications.</p>
+
+<p>
+</p><h2>Streams</h2>
+
+<ul>
+<li>To understand file I/O it is useful to understand the meaning of the 
+term <em>stream</em></li>
+<li>A <em>stream</em> is simply the flow of data from one thing to another</li>
+<li>Examples of streams:
+    <ul>
+    <li>Keyboard input (keyboard to memory)</li>
+    <li>Screen output (memory to screen)</li>
+    <li>File input and output (memory to and from file)</li>
+    <li>Network input and output (memory to and from another machine on the
+    network)</li>
+    </ul>
+</li>
+<li>In Java, each type of stream is a class</li>
+<li><em>System.out</em> is a standard stream representing output to screen</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Streams in Java</h2>
+
+<ul>
+<li>The Java standard library has a number of different types of stream</li>
+<li>There are a number of independent ways in which these can be 
+subdivided including:
+    <ul>
+    <li>Input vs. output streams</li>
+    <li>Low level vs. wrapper streams</li>
+    <li>Byte vs. character streams</li>
+    </ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>1. Input vs. output streams</h2>
+
+<ul>
+<li>The simplest distinction to make</li>
+<li> An <em>input stream</em> represents
+<em>input</em> to the program (from file, keyboard, network, etc)</li>
+<li>An <em>output stream</em> represents <em>output</em> from the program (to
+file, screen, network etc)</li>
+</ul>
+
+<p></p>
+
+
+<p>
+</p><h2>2. Low level vs Wrapper Streams</h2>
+
+<ul>
+<li><strong>Low level streams:</strong>
+    <ul>
+    <li>Interact directly with the data source, e.g. the file or the network
+    connection</li>
+    <li>Read or write <em>single bytes</em></li> 
+    <li>e.g. FileInputStream, FileOutputStream</li>
+    </ul>
+</li>
+<li><strong>Wrapper streams:</strong>
+    <ul>
+    <li>These <em>filter</em> data, taking in data in one format and outputting
+    it in another</li>
+    <li>Provide a high-level interface to allow us to convert 
+    the raw bytes read or written by low level streams
+    to and from actual data types (e.g. int, float and even objects)</li>
+    <li>Typically <em>wrapped</em> round a low level stream; the constructor 
+    takes a low level stream as an argument</li>
+    </ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Low Level vs Wrapper Streams - Input</h2>
+
+<img src="./File I_O_files/javastreams2.png" alt="Java input streams, 
+low level and wrapper">
+
+<p></p>
+
+<p>
+</p><h2>Example of a Low Level Stream - FileInputStream</h2>
+
+<pre class="codebox">FileInputStream fs=new FileInputStream("bytes.bin");    
+byte[] bytes=new byte[10];
+if (fs.read(bytes) != 10)
+{
+    System.out.println("Less than 10 bytes read. File corrupted");
+    System.exit(1);
+}
+</pre>
+<ul>
+<li>This example reads in 10 bytes from file and stores them in an array</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Example of a wrapper stream - the DataOutputStream</h2>
+
+<ul>
+<li>An output wrapper stream</li>
+<li>Wraps FileOutputStream</li>
+<li>e.g.
+<pre class="codebox">import java.io.*;
+public class FileEx1
+{
+    public static void main (String args[])
+    {
+        try
+        {
+            FileOutputStream fs = new FileOutputStream("data.bin");
+            DataOutputStream ds = new DataOutputStream(fs);
+            ds.writeInt(1);
+            ds.writeChar('b');
+            ds.writeDouble(3.1415927);
+            ds.close(); // close the file to ensure data is flushed to file
+        }
+        catch(IOException e)
+        {
+            System.out.println (e);
+        }
+    }
+}
+</pre>
+</li>
+<li>Note that the <em>catch IOException</em> block is to handle any errors
+that might occur; next term we will consider "exceptions" in more
+detail</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>DataOutputStream - Notes on example</h2>
+
+<ul>
+<li>Note the <em>wrapping</em> of streams here</li>
+<li>The DataOutputStream takes in ints, chars
+and doubles, but passes out a stream of raw bytes (hence it is acting as
+a <em>filter</em>)</li>
+<li> The raw bytes are then passed to the FileOutputStream which
+actually writes them to file.</li>
+<li>The DataOutputStream <em>wraps</em> the FileOutputStream</li>
+<li>This is 
+similar to the way that ObjectOutputStream <em>wraps</em> FileOutputStream
+when writing whole objects to file</li>
+<li>Same principle for input: wrap a DataInputStream round a FileInputStream
+to convert raw bytes read in from file to higher-level data types e.g.
+<pre>FileInputStream fs = new FileInputStream("data.bin");
+DataInputStream ds = new DataInputStream(fs);
+int i = ds.readInt();
+char c = ds.readChar();
+double d = ds.readDouble(); 
+</pre>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Object Streams</h2>
+
+<ul>
+<li><em>ObjectInputStream</em>
+and <em>ObjectOutputStream</em> can be used to save and load
+<em>whole objects</em> to and from file</li>
+<li>This process is known as <em>serialization</em></li>
+<li>To <em>serialise</em> an object means to save its state to file so that
+it can later be read in unchanged</li>
+</ul>
+
+<p></p>
+
+
+
+
+<p>
+</p><h2>Byte streams vs Character Streams</h2>
+
+<p>A further division of stream types is that between 
+<em>byte streams</em> and <em>character streams</em>.</p>
+<ul>
+<li><strong>Byte streams</strong>: 
+    <ul>
+    <li>Exist within the InputStream and 
+    OutputStream inheritance hierarchies</li>
+    <li>Deal with transfer of 
+    <em>single bytes</em> to and from file</li>
+    <li>Typically used for input and output of binary data</li>
+    </ul>
+</li>
+<li><strong>Character streams</strong>: 
+    <ul>
+    <li>Exist within the <em>Reader</em> and 
+    <em>Writer</em> inheritance hierarchies</li>
+    <li>Deal with transfer of <em>Unicode 
+    characters</em> (data type char) to and from file 
+        <ul class="subpoint">
+        <li> The <em>char</em> data type in Java consists of <em>2</em>
+           bytes due to the use of Unicode for representing international 
+        characters)</li>
+        </ul>
+    </li>
+    <li>Typically used for text input and output</li>
+    </ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Example of character streams - Text I/O</h2>
+
+<ul>
+<li>To account for Unicode, when performing text I/O we use Readers and Writers
+</li>
+<li>
+To <em>output</em> data, we wrap the raw <em>FileWriter</em> stream (used to 
+actually write the raw Unicode to file) in the high-level stream 
+<em>PrintWriter</em>, which allows us to use formatted printing 
+(e.g. \n) as we would normally do to screen.</li>
+<li>Text <em>input</em> is a little different. We use the corresponding
+<em>FileReader</em> as the low-level stream, but this time we wrap it in
+<em>BufferedReader</em> to enhance the efficiency of the file read. </li>
+<li>
+(There is no <em>PrintReader</em>, as there is no corresponding input 
+operation to the formatted output that <em>PrintWriter</em> facilitates).</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Example of character streams - Text I/O</h2>
+
+<pre class="codebox">import java.io.*;
+public class FileEx2
+{
+    public static void main (String args[])
+    {
+        try
+        {
+            PrintWriter pw = 
+                new PrintWriter( new FileWriter("data.txt"));
+
+            pw.println("Hello");
+            pw.println("It's a nice day!");
+            pw.close(); // close the file to ensure data is flushed to file
+        }
+        catch(IOException e)
+        {
+            System.out.println ("I/O Error: " + e);
+        }
+    }
+}
+</pre>
+
+<p></p>
+
+<p>
+</p><h2>Reading from a text file</h2>
+
+<ul>
+<li>When <em>reading</em> from a text file, we can make use of the
+BufferedReader class</li>
+<li>This is another use of wrapper streams. We use <em>FileReader</em> as the low-level stream
+(this reads the stream as a character stream, so we can deal with Unicode characters) and then
+wrapped as a BufferedReader, so that data is buffered in memory as it is read in (for efficiency)</li>
+<li>We repeatedly call the BufferedReader's <em>readLine()</em> method (which returns the next line) until
+there are no more lines to read (in which case <em>readLine()</em> will return null)</li>
+<li>e.g:
+<pre>import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class FileRead
+{
+    public static void main (String[] args)
+    {
+        try
+        {
+            BufferedReader reader = new BufferedReader(new FileReader("marks.txt"));
+            String line = "";
+            while((line = reader.readLine()) != null)
+            {
+                System.out.println(line);
+            }
+        }
+        catch(IOException e)
+        {
+            System.out.println("ERROR: " + e);
+
+        }
+    }
+}
+</pre>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>File formats</h2>
+
+<p>File formats can be <em>binary</em> or <em>text-based</em>. A binary file (examples being common image
+formats such as JPEG or PNG) consists of the raw bytes making up the data (such as the image). Typically,
+binary files also contain a <em>header</em> which <em>describes</em> the data. For example, an image file
+might contain a header which describes the colour-depth (bits per pixel) and the width and height of the image.
+Code which reads the file can make use of the header to determine how to intepret the rest of the data.
+Binary files cannot be easily read in a text editor.
+</p>
+
+<p>By contrast, text files can be read and understood in a text editor. There are a number of structured ways in 
+which data can be stored in a text file. Two standard formats, XML and JSON, will be covered later in the course.
+A simpler, common way of storing text data is a <em>comma-separated values (CSV)</em> file. In a CSV file, each item of data
+is stored in one line, and different aspects of the data are separated by commas. For example, a file containing
+staff contact details might look like this:
+</p><pre>Tony,Rees,RM601,3456
+David,Osguthorpe,RM602,3334
+Mark,Cranshaw,RM603,3122
+</pre>
+Note how the CSV file contains each aspect of the data (first name, surname, room, phone extension) separated by commas.
+CSV files are quite easy to interpret: we can use <em>BufferedReader</em> to read the file (as above) and then use
+the <em>split</em> method of <em>String</em> to split up each individual line. Here is an example of reading a CSV file
+into a series of <em>Staff</em> objects (exception handling not shown, for clarity):
+<pre>ArrayList&lt;Staff&gt; staff = new ArrayList&lt;Staff&gt;();
+BufferedReader reader = new BufferedReader(new FileReader("staff.csv"));
+String line;
+while((line = reader.readLine()) != null)
+{
+    String[] components = line.split(",");
+    if(components.length==4)
+    {
+        Staff currentStaff = new Staff (components[0], components[1], components[2], components[3]);
+        staff.add(currentStaff);
+    }
+}
+</pre>
+Note how this is working. We read in each line, and use the <em>split()</em> method to split the current line into an array
+of its individual components. We then check that the length of the array is the expected value (4 - first name, surname, room,
+extension) and if so, create a new Staff object using the individual components of the line and add it to the ArrayList of Staff.
+<p></p>
+
+<h2>Android-specific file IO issues</h2>
+
+<h3>Default directory</h3>
+
+<p>
+
+Having looked at general Java file I/O, we are now going to look at where data can be saved on a mobile device. Typically a device
+has a file system either internally on the device or on an SD card, depending on the model. There is a default root (top-level) directory
+(folder) to the file system, however you do not hardcode the location of this root directory in the same way that you would
+specify the C: drive on Windows. Instead you use the method <em>Environment.getExternalStorageDirectory()</em> to obtain the top-level 
+directory on the device. This returns an object of type <em>File</em>; you then use the <em>getAbsolutePath()</em> method to obtain
+a String containing the full path to the top-level directory. Here is a full example which would work on Android:
+</p><pre>import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import android.os.Environment;
+import android.app.AlertDialog;
+
+try
+{
+    FileReader fr = new FileReader(<em>Environment.getExternalStorageDirectory().getAbsolutePath()</em> + "/marks.txt");
+    BufferedReader reader = new BufferedReader(fr);
+    String line = "";
+    while((line = reader.readLine()) != null)
+    {
+        // do something with each line...
+    }
+    reader.close();
+}
+catch(IOException e)
+{
+    new AlertDialog.Builder(this).setPositiveButton("OK", null).
+        setMessage("ERROR: " + e).show();
+
+}
+</pre>
+
+<p></p>
+
+<p>
+Note how we specify the filename using the top-level directory plus the filename.
+Also note the use of <em>AlertDialog.Builder</em> to display an alert dialog showing the error if an IOException is thrown.
+This is an inbuilt Android method which "builds" an alert dialog with the supplied parameters. Here we can see that we set the message on the
+dialog to the result of the exception's toString() method and then show it. Without the <em>show()</em> call, the alert dialog would never be shown. 
+</p>
+<p>Noe also the use of "method chaining". Each method in this line of code returns a copy of the AlertDialog object, so that we can call a further method on it.
+Another example:
+</p><pre>new AlertDialog.Builder(this).setMessage ("Error loading").setPositiveButton("Dismiss", null).show();</pre>
+This example specifies custom text on the AlertDialog's OK button. The second parameter to <em>setPositiveButton()</em> (null here) allows you to 
+specify a listener for the button, to set up custom event handling if necessary.
+<p></p>
+
+<h3>Permissions</h3>
+
+<p>Any Android app which saves to file or loads back needs to have the appropriate permissions granted in the manifest file. Make sure that you add one or both
+(as appropriate) of the following permission
+lines to the manifest (before the &lt;application&gt; tag):
+</p><pre>&lt;uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /&gt;
+&lt;uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /&gt;
+</pre>
+<p></p>
+
+<hr>
+
+
+<h2>Exercise</h2>
+
+<ol>
+<li>Write a simple text-editor/notepad app with Android. The main activity should consist of a single EditText occupying the whole
+of the screen.
+The user should be able to enter some text in the EditText.  Note that you can make the text inside the EditText align to the top by adding the
+property <em>android:gravity="top"</em> to the &lt;EditText&gt; tag in the layout XML file. There should be two 
+menu options labelled "Save" and "Load". When the user
+selects "Save", it should save the contents of the EditText 
+to a text file "textedit.txt". 
+The text file should be saved in the directory returned by
+<pre>Environment.getExternalStorageDirectory().getAbsolutePath()</pre>
+If the text file preference has not been set, use the filename "textedit.txt".
+When the user selects "Load", the EditText should be filled with the contents 
+of "textedit.txt".</li>
+<li>Handle exceptions with the use of <em>AlertDialog.Builder()</em> as shown above.</li>
+<li>Test that it has worked by navigating the file system of your emulator. 
+To view the file, use the <em>Device File Explorer</em> (you can access this
+by clicking on the label on the right-hand side of the window).
+Your file will be saved in <em>/storage/sdcard</em> or
+<em>/storage/emulated/0</em>, dependent on the device.</li>
+<li>Change your app so that the user can specify the filename in the
+preferences.</li>
+</ol>
+<p></p>
+<!--
+<p>
+<img src="images/ddms.png" alt="Use of DDMS" />
+</p>
+-->
+<h3>Advanced exercise</h3>
+<ol>
+<li>Write a simple address book app. The main activity should contain an ArrayList of Contact objects.
+ The user should be able to add a contact using the main Activity;
+there should be separate EditTexts for first name, last name, phone number and address, as shown below:
+<br>
+<img src="./File I_O_files/addressbook.png" alt="Address book layout">
+<br>
+There should be four menu items, "Add", "Save", "Load"
+and "Search". These should work as follows:
+    <ul>
+    <li>When the user selects Add, the current text in the EditTexts should be used to create a new Contact object which is added to
+    the ArrayList of Contacts.</li>
+    <li>When the user selects Save, the contacts in the ArrayList should be saved as a CSV file (just call it
+    contacts.csv).</li>
+    <li>When the user selects Load, the current contacts.csv file should be opened, and the ArrayList of Contacts filled with them. </li>
+    <li>Finally when the user
+    selects Search, the ArrayList should be searched for the contact with the same last name as that currently in the last-name EditText,
+    and the first-name, phone number and address EditTexts filled in with the appropriate values for the matching Contact. (Assume that no two contacts
+    have the same last name).</li>
+    </ul>
+</li>
+</ol>
+
+
+
+
+</body></html>

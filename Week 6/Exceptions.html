@@ -1,0 +1,489 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0050)https://edward2.solent.ac.uk/course/mad/part7.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Mobile Application Development: Part 7:
+Exceptions</title>
+<link rel="stylesheet" type="text/css" href="./Exceptions_files/android.css">
+</head>
+
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 7</h1>
+<h1>Exceptions</h1>
+</div>
+
+<p>
+</p><h2>Credits for this week's notes</h2>
+
+<ul>
+<li><em>Some of today's notes are based on the originals by
+John Flackett, a former member of staff, but reworded</em></li>
+<li><strong>This topic is only compulsory for Computing students. If you
+are on Software Engineering, you will have already studied exceptions with
+Femi, so can skip it unless you need to revise it.</strong></li>
+</ul>
+
+<p></p>
+
+<h2>Introduction</h2>
+
+<p>Today we will look at the second of our general Java topics within Mobile Application Development:
+error handling with <em>exceptions</em>. An understanding of this topic is necessary to have a good
+understanding of file I/O and network communication, the next two topics.</p>
+
+
+<p>
+In particular, we will look at:
+
+</p><ul>
+<li>The problem with existing error checking methods</li>
+<li>Exceptions as a solution to the problem</li>
+<li>Creating your own exceptions</li>
+<li>Built-in exceptions</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Problem: How can we elegantly deal with errors?</h2>
+
+<ul>
+<li>Traditional approaches to error handling involve testing the 
+<em>return value</em> of a method</li>
+<li>In many cases we can use boolean return values, or <em>null</em> if a method
+returns an object</li>
+<li>However, in some cases, there might be <em>different types of error</em></li>
+<li>e.g. a method which reads data from file could return 0 for success, or
+1 and 2 for different types of error (e.g. file doesn't exist, or hard drive
+is corrupted)</li>
+<li>However this might make our code rather hard to read and understand</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Answer: Use exceptions!</h2>
+
+<ul>
+<li>We can handle the errors by the use of <em>exceptions</em></li>
+<li>When we encounter an error, we <em>throw an exception</em></li>
+<li>An exception is a special object which is generated when the error 
+occurs</li>
+<li>We then <em>catch the exception</em> in the calling code</li>
+</ul>
+<p><img src="./Exceptions_files/exceptions.png" alt="Exceptions"></p>
+
+<p></p>
+
+<p>
+</p><h2>Example of throwing an exception</h2>
+
+<ul>
+<li>Imagine a CD class, which has attributes of type (single or album),
+artist and title:
+<pre>public class CD
+{
+    public void setDetails (String type, String title, String artist)
+                    throws InvalidTypeException
+    {
+        if (type.equals("album") || type.equals("single"))
+        {
+            this.type = type;
+            this.artist = artist;
+            this.title = title;
+        }
+        else
+        {
+           throw new InvalidTypeException("Must be single or album!");
+        }
+    }
+}
+</pre>
+</li>
+<li>We <em>throw an exception</em> if the type is unrecognised i.e. not single
+or album</li>
+<li>If the exception occurs, no code below the throw statement will run</li>
+<li>Instead, we will return back to the calling code</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Catching an exception</h2>
+
+<ul>
+<li>In order to handle the error,
+we need to <em>catch</em> any exception that we throw</li>
+<li>To do that, we put the code which might generate the exception in a
+<em>try/catch</em> block</li>
+<li>e.g.
+<pre>String type = (read in from user)
+String title = (read in from user)
+String artist = (read in from user)
+
+CD cd = new CD();
+
+try
+{
+    cd.setDetails (type, title, artist);    
+    System.out.println("Created CD successfully.");
+}
+catch (InvalidTypeException e)
+{
+    System.out.println ("An error occurred: " + e);
+}
+</pre>
+</li>
+<li>We <em>try</em> the code which might generate the exception (the 
+setDetails() method) and <em>catch</em> any exceptions generated in the
+<em>catch block</em></li>
+<li>The code below the exception-generating method (setDetails) in the try
+block will <em>not run if an exception occurred</em>
+    <ul>
+    <li>In other words, if there was an exception, the 
+    <em>Created CD successfully</em> method will not be displayed</li>
+    </ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>What is an exception class?</h2>
+
+<ul>
+<li>What about the exception class (InvalidTypeException)?</li>
+<li>It's an ordinary class which inherits from the standard library class
+<em>Exception</em>:
+<pre>public class InvalidTypeException extends Exception</pre>
+</li>
+<li>This allows us to use certain features common to all Exceptions</li>
+<li>When we create the exception, we can store information about the exception
+within it</li>
+<li>e.g. the <em>Must be single or album!</em> message:
+<pre>throw new InvalidTypeException("Must be single or album!");</pre>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Example of an exception class</h2>
+
+<ul>
+<li>e.g.
+<pre>public class InvalidTypeException extends Exception
+{
+    String message;
+
+    public InvalidTypeException (String m)
+    {
+        message = m;
+    }
+
+    public String toString()
+    {
+        return message;
+    }
+}
+</pre>
+</li>
+<li>Note how the <em>toString()</em> method returns the message associated with
+the exception</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Built-in Exceptions</h2>
+
+<ul>
+<li>There are many built-in exception classes in Java</li>
+<li>These include:
+	<ul>
+	<li><em>ArithmeticException</em> - an illegal mathematical operation, such
+	as a division by zero, is performed</li>
+	<li><em>ArrayIndexOutOfBoundsException</em> - when we try to look up a member
+	of an array outside the array bounds</li>
+	<li><em>NumberFormatException</em> - if we convert a non-number (e.g. a word)
+	into a number using Integer.parseInt()</li>
+      <li><em>NullPointerException</em> - we try to do something with an 
+    	object which has not been initialised, e.g.
+    <pre>    Person p; // SHOULD BE Person p = new Person(); !
+    p.setName ("John");
+    </pre>
+    </li>
+   <li><em>IOException</em> (i.e. <em>input/output exception</em>) - 
+    some sort of error occurred when we try to write to or read from
+   a file, or connect across a network. This could include, for example, the hard
+   drive or USB stick that we are writing to being corrupted or full</li>
+ <li><em>FileNotFoundException</em> - a subclass of IOException, which is thrown
+  if we try to access a non-existent file</li>
+   </ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>The Exception Class Hierarchy</h2>
+
+<p><img src="./Exceptions_files/exceptionhierarchy.png" alt="The Exception Hierarchy"></p>
+<ul>
+<li>The Exception class itself inherits from <em>Throwable</em>
+    <ul>
+    <li>A <em>Throwable</em> is <em>any object which can be thrown by a throw
+    statement</em></li>
+    <li>It is an error to put a class which is not a subclass of Throwable in a
+    throw statement</li>
+    <li>We will cover other subclasses of Throwable later</li>
+    </ul>
+</li>
+<li><em>RuntimeException</em> (a subclass of Exception) is dealt with in the next
+slide</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Checked and Unchecked Exceptions</h2>
+
+<ul>
+<li>Normally, exceptions <em>must</em> be caught
+    <ul>
+    <li>Such exceptions are known as <em>checked exceptions</em></li>
+    </ul>
+</li>
+<li>The compiler will give an error if we do not catch an exception</li>
+<li>However, if we inherit from <em>RuntimeException</em> we do not have to catch them
+    <ul>
+    <li>RuntimeExceptions are also known as <em>unchecked exceptions</em> as
+    we do not have to catch them</li>
+    </ul>
+</li> 
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Unchecked Exceptions</h2>
+
+<ul>
+<li>Unchecked exceptions (subclasses of RuntimeException) do not have to be 
+caught</li>
+<li>Unchecked exceptions are thrown whenever you try to do something
+<em>avoidable</em></li>
+<li><em>Careful programming, typically using if statements to validate our data,
+ can prevent such exceptions occurring</em></li>
+<li>Therefore, it is silly to <em>force</em> the user to catch the exceptions</li>
+<li>Examples of unchecked exceptions: NullPointerException, ArithmeticException (see above)
+</li>
+<li>In both cases, we can guard against the error occurring:
+	<ul>
+      <li>ArithmeticExceptions can be guarded against by checking in advance
+	whether we are dividing by 0 (with an if statement)</li>
+	<li>NullPointerExceptions can be guarded against by making sure you initialise 
+	all objects, or by checking whether the object is null</li>
+	</ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Checked Exceptions</h2>
+
+<ul>
+<li>All other exceptions are checked exceptions and must be caught</li>
+<li>These exceptions typically cannot be guarded against by careful programming</li>
+<li>One example could be connecting across a network to a remote machine (e.g. a 
+multi-player game server, remote database, or web server)
+	<ul>
+	<li>The network could go down at any time</li>
+	<li>You cannot guard against this in advance</li>
+	<li>So if the network fails, an exception is thrown and you handle it in your
+	code there and then</li>
+	</ul>
+</li>
+</ul>
+
+<p></p>
+
+
+<p>
+</p><h2>Catching Different Types Of Exception</h2>
+
+<ul>
+<li>It is possible that code can throw <em>different types of exception</em></li>
+<li>If this happens, we should <em>handle each type of exception in its own catch
+block</em></li>
+<li>e.g. for reading in from a file, we could get a <em>FileNotFoundException</em> if the
+file does not exist, or, if a general error (such as a hard drive failure) occurs, we
+could get an <em>IOException</em>:
+<pre>try
+{
+	// Not a real Java method - imagine this is a custom method we have written to
+	// read in from file, hiding the complexities of file I/O
+	readFromFile("myfile.dat");
+}
+catch (FileNotFoundException e)
+{
+    System.out.println("Input file myfile.dat could not be found!");
+}
+catch (IOException e)
+{
+    System.out.println("General input/output error - hard drive failure?");
+}
+</pre>
+</li>
+<li>We catch the FileNotFoundException to handle the specified file not existing</li>
+<li>Then we catch the IOException to handle any other input/output errors, e.g.
+hard drive failure</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Order of catching multiple exceptions</h2>
+
+<ul>
+<li>If more than one catch block matches an exception...
+    <ul>
+    <li>e.g. for a FileNotFoundException, both the
+    <em>catch(FileNotFoundException e)</em> and the <em>catch (IOException e)</em> match,
+    as FileNotFoundException is a subclass of IOException</li>
+    </ul>
+the <em>first catch block in the code</em> is run in preference</li>
+<li>So, <em>always put the catch blocks to handle the 
+more specific exceptions first in your code</em>
+    <ul>
+    <li>More specific exceptions (e.g. FileNotFoundException)
+    will likely require special treatment</li>
+    </ul>
+</li>
+<li>a final <pre>catch (Exception e)</pre> will catch any exceptions not caught by the
+more specific catch blocks above</li>
+<li>e.g.
+<pre>try
+{
+    ....
+}
+catch (VerySpecificException e)
+{ 
+    ...
+}
+catch (MoreGeneralException e)
+{
+    ....
+}
+catch (Exception e)
+{
+    ....
+}
+</pre>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>Getting information about an exception</h2>
+
+<ul>
+<li>There are two built-in methods for getting information about an 
+exception:
+    <ul>
+    <li><em>getMessage()</em> - displays the message associated with an
+    exception</li>
+    <li><em>printStackTrace()</em> - displays where in your program the 
+    exception occurred</li>
+    </ul>
+</li>
+</ul>
+
+<p></p>
+
+<p>
+</p><h2>finally</h2>
+
+<ul>
+<li>A try/catch block can have an optional <em>finally</em> block</li>
+<li> A <em>finally</em> block always runs, whether or not an exception 
+occurred</li>
+<li>It's typically used for cleanup operations such as closing 
+a connection to a database</li>
+<li>e.g:
+<pre>DatabaseConnection conn = new DatabaseConnection();
+conn.open("databaseserver", "dftitutorials", 
+                    "dftitutorials" );
+try
+{
+    conn.selectDB( "dftitutorials" );
+
+    // read stuff from the database
+    results = conn.query("select * from hits");
+    ... etc ...
+}
+catch(DatabaseException e)
+{
+    System.out.println("Error querying database: " + e);
+}
+finally
+{
+    conn.close();
+}
+</pre>
+</li>
+<li>We need to close the database connection
+whether or not an exception occurred while reading data from the
+database</li>
+</ul>
+
+<p></p>
+
+<h2>Exercises</h2>
+
+
+<ol>
+<li>If you try to convert a non-numerical String to a number 
+(via Integer.parseInt() or Double.parseDouble(), for instance)
+a built-in exception type, the NumberFormatException, will be thrown. 
+Return to your feet-to-metres example from Topic 2, and rewrite it so that
+it <em>tries</em> to execute the code to read the feet from the EditText, and
+<em>catches</em> any NumberFormatException thrown.
+If the exception is caught, display an appropriate error message via an Alert 
+Dialog:
+<pre>new AlertDialog.Builder(this).
+setPositiveButton("OK", null).
+setMessage("error message").show();</pre>
+<strong>If you did not complete the feet-to-metres example, please fork 
+it from:</strong>
+<pre>https://github.com/nwcourses/FeetToMetres</pre>
+</li>
+<li> Create a new Android project.
+Add a new class called Clock (representing time) to this project. 
+The class should contain:
+	<ul>
+	<li>three attributes: hours, minutes and seconds; </li>
+	<li>a no-parameters constructor, which sets all of them to 0; </li>
+	<li>a toString() method, which displays the time in a standard format
+	e.g. hour:minute:second;</li>
+	<li>and a method, setTime() which takes three parameters (hoursIn, minutesIn and secondsIn) and sets the attributes accordingly.</li>
+	</ul>
+Create another new class - <em>TimeException</em> -
+to represent errors with the Clock class. The TimeException need only have two 
+methods, a constructor, which takes a message as a parameter, 
+and a toString() method. </li>
+<li>In setTime(), throw a TimeException if the hours, minutes or seconds are not valid. Pass an appropriate message to the TimeException when creating it.
+</li>
+<li>Test your system via a simple Android Activity. This should allow the user 
+to enter hours, minutes and seconds via three EditTexts. When the user clicks
+a "Go!" button, the formatted time (returned from toString()) should be
+displayed in a TextView below the EditTexts and the button, by creating a 
+Clock and calling its toString() method. 
+Catch the TimeException thrown, by 
+displaying an appropriate error message via an Alert Dialog  (see above).</li>
+</ol>
+
+
+</body></html>

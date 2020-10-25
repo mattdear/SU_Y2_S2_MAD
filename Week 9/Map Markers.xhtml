@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development Part 11: Map Markers </title>
+<link rel="stylesheet" type="text/css" href="./Map Markers_files/android.css" />
+</head>
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 11</h1>
+<h1>Map Markers</h1>
+</div>
+
+<p>In this topic we will:
+    <ul>
+    <li>Look at how to add markers to an osmdroid map</li>
+    </ul>
+</p>
+
+<h2>Introduction</h2>
+
+<p>This topic is relatively easy compared to some of the recent topics but is a useful topic to know
+if you are developing any sort of geographically-aware app: the ability to add <em>markers</em> to
+a mapping application. Many geographically-aware apps show points of interest as <em>markers</em> 
+on the map. </p>
+
+<h2>How to code markers in osmdroid</h2>
+<h3>Adding markers to a map</h3>
+<p>The example below shows how to add markers to a map:
+<pre>
+<![CDATA[
+package com.example.markers;
+
+import android.app.Activity;
+
+import android.os.Bundle;
+
+import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import java.util.ArrayList;
+
+import android.preference.PreferenceManager;
+import android.widget.Toast;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.OverlayItem;
+
+
+public class MainActivity extends Activity {
+
+    MapView mv;
+    ItemizedIconOverlay<OverlayItem> items;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+		
+		// This line sets the user agent, a requirement to download OSM maps
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+		
+        setContentView(R.layout.activity_main);
+        mv = (MapView) findViewById(R.id.map1);
+
+        mv.getController().setZoom(14);
+        mv.getController().setCenter(new GeoPoint(51.05, -0.72));
+
+       
+        items = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), null);
+        OverlayItem fernhurst = new OverlayItem("Fernhurst", "Village in West Sussex", new GeoPoint(51.05, -0.72));
+        OverlayItem blackdown = new OverlayItem("Blackdown", "highest point in West Sussex", new GeoPoint(51.0581, -0.6897));
+        items.addItem(fernhurst);
+        items.addItem(blackdown);
+        mv.getOverlays().add(items);
+
+
+    }
+}
+]]>
+</pre>
+Note what we are doing here. There are two key classes:
+	<ul>
+	<li><em>OverlayItem</em>, representing an individual marker, and 
+	</li>
+	<li>
+	<em>ItemizedIconOverlay</em>, representing a <em>layer</em> of markers.</li>
+	</ul>
+How does the code work?
+    <ul>
+    <li>We create an <em>ItemizedIconOverlay</em> object. An <em>overlay</em> is a separate layer on top of the map, which can
+    be used to display markers (and other overlays such as lines and polygons).</li>
+    <li>The ItemizedIconOverlay constructor takes three parameters:
+        <ul>
+        <li>The current activity (<em>this</em>);</li>
+        <li>A blank ArrayList to hold the individual OverlayItems;</li>
+        <li>A marker gesture listener. This is a listener object which listens out for taps or presses on the markers and reacts
+        to them. This is set to <em>null</em> for now.</li>
+        </ul>
+    </li>
+    <li>Each marker is an <em>OverlayItem</em> object</li> 
+    <li>We then create an OverlayItem, using a given location, a title ("Fernhurst" here) and a snippet (a short description))
+    description ("Village in West Sussex" here):
+    <pre>OverlayItem fernhurst = new OverlayItem("Fernhurst", "Village in West Sussex", new GeoPoint(51.05, -0.72));</pre></li>
+    <li>
+    We add the OverlayItem to the overlay:
+    <pre>items.addItem(fernhurst);</pre>
+    </li>
+    <li>We then add the overlay to the list of overlays on the MapView:
+    <pre>mv.getOverlays().add(item);    </pre>
+    </li>
+    </ul>
+</p>
+<h3>Marker events</h3>
+<p>We probably want something to happen when we tap on a marker, for example display details of that marker. How do we do this?
+We have to create an <em>OnItemGestureListener</em> object to listen to tap events, i.e. the user tapping items on the overlay, or
+long press events, i.e. the user pressing on the item for a second or two:
+<pre>
+<![CDATA[
+package com.example.markers;
+
+import android.app.Activity;
+
+import android.os.Bundle;
+
+import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import java.util.ArrayList;
+
+import android.preference.PreferenceManager;
+import android.widget.Toast;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.OverlayItem;
+
+public class MainActivity extends Activity {
+
+    MapView mv;
+    ItemizedIconOverlay<OverlayItem> items;
+    ItemizedIconOverlay.OnItemGestureListener<OverlayItem> markerGestureListener;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+		
+        // This line sets the user agent, a requirement to download OSM maps
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+		
+        setContentView(R.layout.activity_main);
+        mv = (MapView) findViewById(R.id.map1);
+
+        mv.getController().setZoom(14);
+        mv.getController().setCenter(new GeoPoint(51.05, -0.72));
+
+        markerGestureListener = new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>()
+        {
+            public boolean onItemLongPress(int i, OverlayItem item)
+            {
+                Toast.makeText(MainActivity.this, item.getSnippet(), Toast.LENGTH_SHORT).show();
+                return true;
+            }
+
+            public boolean onItemSingleTapUp(int i, OverlayItem item)
+            {
+                Toast.makeText(MainActivity.this, item.getSnippet(), Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        };
+
+        items = new ItemizedIconOverlay<OverlayItem>(this, new ArrayList<OverlayItem>(), markerGestureListener);
+        OverlayItem fernhurst = new OverlayItem("Fernhurst", "the village of Fernhurst", new GeoPoint(51.05, -0.72));
+
+        // NOTE is just this.getDrawable() if supporting API 21+ only
+        fernhurst.setMarker(getResources().getDrawable(R.drawable.marker));
+        items.addItem(fernhurst);
+        items.addItem(new OverlayItem("Blackdown", "highest point in West Sussex", new GeoPoint(51.0581, -0.6897)));
+        mv.getOverlays().add(items);
+
+
+    }
+}
+
+]]>
+</pre>
+Note how we create an inner class of type <em>MyOverlayGestureListener</em> which <em>implements ItemizedIconOverlay.OnItemGestureListener&lt;OverlayItem&gt;
+</em>.
+This is a listener object - an event handler - 
+which responds to user interaction with the items on the layer. Note also how this is another example of an <em>inner class</em> - 
+you met these last time when we looked at the AsyncTask. You must provide the methods <em>onTap()</em> -
+an event handler method containing code to run if the user taps any overlay item on the overlay, and
+<em>onLongPress()</em> - an event handler method containing code to run if the user long-presses any item on the overlay.</p>
+<p><em>onTap()</em> and <em>onLongPress()</em> each take two parameters, the index of the OverlayItem within the overlay, and the
+OverlayItem itself which was tapped.</p>
+<p>In each method, we make a Toast using that overlay item:
+<pre>Toast.makeText(MainActivity.this, "TAP: "+ item.getSnippet(), Toast.LENGTH_SHORT).show();</pre>
+<em>getSnippet()</em> gives us the description of that overlay item (e.g. "Village in West Sussex" for Fernhurst).
+We can also use <em>getTitle()</em> to get the title of the overlay item.</p>
+    
+<p>To link the listener to the overlay layer, you provide it as the third parameter (this was null in the first example) to the 
+ItemizedIconOverlay:
+<pre>
+items = new ItemizedIconOverlay&lt;OverlayItem&gt;(this, new ArrayList&lt;OverlayItem&gt;(), markerGestureListener);
+</pre>
+</p>
+
+<h3>Custom markers</h3>
+
+<p>So far we have used the built-in osmdroid marker. However we can use
+<em>custom markers</em> for our app. Here is how we do this with the <em>fernhurst</em> OverlayItem:
+<pre>fernhurst.setMarker(getResources().getDrawable(R.drawable.marker));</pre>
+</p>
+<p>Note how the <em>setMarker()</em> method takes the parameter
+    <pre>getResources().getDrawable(R.drawable.mymarker)</pre>
+    This is an object of type <em>Drawable</em> representing the marker icon. We obtain a <em>Drawable</em> by supplying
+    the resource ID <em>R.drawable.marker</em> as a parameter to <em>getDrawable()</em>. The resource ID
+    <em>R.drawable.marker</em> points to an image <em>marker.png</em> 
+    in the <em>drawable</em>
+    folder (the folder storing drawables, i.e. images and icons)
+	within the <em>res</em> folder of the project. This can be added by downloading an
+	example image from <a href="https://edward2.solent.ac.uk/course/mad/images/marker.png">here</a>, copying it and pasting
+    it into your <em>res</em> folder.</p>
+<p>If supporting Android 5.0+ (API level 21+) you should instead use simply
+<pre>getDrawable(R.drawable.mymarker)</pre>
+rather than
+<pre>getResources().getDrawable(R.drawable.mymarker)</pre>
+as the latter is deprecated at API level 21.
+</p>
+
+<h2>Exercises</h2>
+<ul>
+<li>Write an app which centres on your home town and adds a marker at the centre of your home town. Use
+<a href="http://www.informationfreeway.org/">informationfreeway.org</a> to find the longitude and latitude of your home town.</li>
+<li>Find points of interest in your home town (such as pubs, churches, restaurants, sports grounds, etc) in your home town,
+and add markers to each.
+Make an appropriate Toast message appear when the user taps on the marker, as in the example above.</li>
+<li>Available at
+<pre>https://edward2.solent.ac.uk/course/mad/restaurants.txt</pre>
+is a CSV file containing the location of local restaurants (format: name,type,town,lon,lat). Save this on your device; save to your U: drive
+first and then upload to the device using Device File Explorer: upload to the 
+<em>/storage/emulated/0</em> (or possibly <em>/storage/sdcard</em> depending
+on the device) folder on the device. Right click on the folder and select
+the Upload option.<br />
+<br />
+Modify the app so that it loads this file on startup, interprets each line of the
+CSV file (see <a href="https://edward2.solent.ac.uk/course/mad/part8.html">file I/O</a> for how to interpret CSV files),  and displays each
+restaurant in the file as a marker. Again, make an appropriate Toast message appear when the user taps on the marker.</li>
+<li>Advanced exercise: use different markers for different point of interest
+types. There are some sample markers 
+<a href="https://hikar.org/fm/icons">here</a>.</li>
+</ul>
+<p>(Credit - points of interest taken from OpenStreetMap,
+(c) OpenStreetMap contributors, Open Database Licence)</p>
+</body>
+</html>

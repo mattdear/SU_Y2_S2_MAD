@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development Part 10: JSON Parsing </title>
+<link rel="stylesheet" type="text/css" href="./JSON Parsing_files/android.css" />
+</head>
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 10</h1>
+<h1>JSON Parsing</h1>
+</div>
+
+<p>In this topic we will:
+    <ul>
+    <li>Examine JSON</li>
+    <li>Look at how to parse JSON from Android</li>
+    </ul>
+</p>
+
+<h2>Introduction</h2>
+
+
+<p>
+<em>JSON - JavaScript Object Notation</em> is a data format which is used
+to transfer data across the web between server-side scripts (written in
+languages such as PHP) and clients (such as Android apps).
+It uses JavaScript syntax to represent data. </p>
+<p>In JSON, data is transferred as objects and arrays of objects. We use square brackets [] to represent arrays and curly brackets {} to represent 
+objects. For example, if we had a server side script to look up details of famous people, we might get a result such as:
+<pre>
+{
+    "name": "Tim Berners-Lee",
+    "nationality": "British",
+    "dob" : "8/6/1955",
+    "comments" : "Inventor of the World Wide Web."
+}
+</pre>
+What is being sent back is a representation of an <em>object</em> with four <em>attributes</em>: <em>name</em>,
+<em>nationality</em>, <em>dob</em> and <em>comments</em>. Each attribute has a <em>value</em>.
+The curly brackets { and } begin and end the object.
+</p>
+<p>It is of course possible that we might get <em>more than one record</em> returned from the server. In this case, we get
+an <em>array</em> of objects back instead. For example, if we did a search for
+all people called Tim Smith studying at a university, we might get back something like this:
+<pre>
+[
+    { "username": "2smitt82", "year": "2", "course": "Computing", "phone": "07962 296229" },
+    { "username" : "1smitt71", "year": "3", "course": "Chemistry", "phone": "07713 271317" },
+    { "username": "3smitt93", "year": "1", "course" : "Web Design", "phone": "07862 141561" }
+]
+</pre>
+Note how the JSON contains an <em>array</em> of three student objects. The array is indicated with the square brackets [ and ], and within the
+array are three objects, each representing an individual student, and each indicated with curly brackets { and }.
+</p>
+
+<h2>Parsing JSON from Android</h2>
+
+<p>Luckily, Android comes with a set of classes to parse JSON. These will load JSON into memory and convert them into Java objects.
+We make use of the following classes.
+    <ul>
+    <li><em>JSONObject</em> - represents an individual JSON object (such as the Tim Berners-Lee object above or each of the three individual
+    students in the Tim Smith example)</li>
+    <li><em>JSONArray</em> - represents an array of JSON objects, such as the array of the three students named Tim Smith in the
+    second example above.</li>
+    </ul>
+</p>
+
+<p>The general strategy for parsing JSON is to:
+    <ul>
+    <li>Load the string of JSON into a JSONArray or JSONObject (as appropriate)</li>
+    <li>If an array, loop through each individual JSONObject in the array and extract the individual
+    attributes;</li>
+    <li>Otherwise, simply extract the attributes.</li>. 
+    </ul>
+</p>    
+    
+    
+<h3>Example</h3>
+
+<p>The example below creates a string of JSON representing a single object,
+and loads it into memory as a JSONObject. It also shows how we can access the individual attributes
+of the JSONObject.
+
+<pre>
+package com.example.json;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.app.AlertDialog;
+import android.widget.TextView;
+import org.json.JSONObject;
+import org.json.JSONException;
+
+public class JSONExample1 extends Activity
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        try
+        {
+            String json = "{" +
+    "'name': 'Tim Berners-Lee' , 'nationality': 'British', 'dob' : '8/6/1955', 'comments' : 'Inventor of the World Wide Web.'" +
+            "}";
+            
+            JSONObject jsonObj = new JSONObject (json);
+            String name = jsonObj.getString("name"),
+                nationality = jsonObj.getString("nationality"),
+                dob = jsonObj.getString("dob"),
+                comments = jsonObj.getString("comments");
+                
+            TextView tv = (TextView)findViewById(R.id.textview1);
+            tv.setText("Name = " + name + " Nationality = " + nationality + " DOB = " + dob + " Comments = " + comments);
+        }
+        catch (JSONException e)
+        {
+            new AlertDialog.Builder(this).setMessage(e.toString()).setPositiveButton("OK", null).show();
+        }    
+    }
+}
+
+</pre>
+</p>
+<p>
+Note the following:
+    <ul>
+    <li>We use <em>getString()</em> with an attribute name to retrieve a particular attribute of the JSONObject.</li>
+    <li>There are corresponding <em>getInt()</em> and <em>getDouble()</em> methods if the attributes are ints and
+    doubles, rather than strings.
+        <ul>
+        <li>See <a href="http://developer.android.com/reference/org/json/JSONObject.html">the JSONObject API page</a> for full details
+        on the methods of JSONObject.</li>
+        </ul>
+    </li>
+    <li>If the JSON is in an incorrect format, a <em>JSONException</em> will be thrown. This is a checked exception,
+    therefore we must catch it.</li>
+    </ul>
+</p>
+
+<p>This second example creates a string of JSON representing three objects, and loads it into memory as
+a JSONArray containing JSONObjects. It also shows how we can loop through the JSONArray and extract each individual
+object, one at a time.</p>
+
+<pre>
+<![CDATA[
+package com.example.json;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.app.AlertDialog;
+import android.widget.TextView;
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+public class JSONExample2 extends Activity
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        try
+        {
+            
+             String json = "[" +
+                        "{ 'name' : 'Tim Smith', 'username': '2smitt82', 'year': '2', 'course': 'Computing', 'phone': '07282 282282' } ," +
+                        "{ 'name' : 'David Osguthorpe', 'username' : '1osgud69', 'year': '3', 'course': 'Chemistry', 'phone': '07969 969969' }," +
+                        "{ 'name': 'Deep Patel', 'username': '0pated61', 'year': '1', 'course' : 'Web Design', 'phone': '07761 061061' }"
+                            +"]";
+                    
+                        JSONArray jsonArr = new JSONArray (json);
+                        String curName, curNationality, curDOB, curComments;
+                                
+                        TextView tv = (TextView)findViewById(R.id.tv1);
+                        String text="";
+                        
+                        for(int i=0; i<jsonArr.length(); i++)
+                        {
+                            JSONObject curObj = jsonArr.getJSONObject(i);
+                            String name = curObj.getString("name"),
+                                course = curObj.getString("course"),
+                                username = curObj.getString("username"),
+                                phone = curObj.getString("phone");
+                            text +=" Name= "+ name + " Course = " + course + " Username= " + username + " Phone = " + phone + "\n";
+                        }
+                        tv.setText(text);
+        }
+        catch (JSONException e)
+        {
+            new AlertDialog.Builder(this).setMessage(e.toString()).setPositiveButton("OK", null).show();
+        }    
+    }
+}
+]]>
+</pre>
+<p>
+Note the following:
+    <ul>
+    <li>This time the data is loaded into a JSONArray, as it is an array of objects, rather than a single object.</li>
+    <li>We use the <em>length()</em> method of JSONArray to obtain the number of elements within the array.</li>
+    <li>We then loop through the array, extracting each object in turn with the <em>getJSONObject()</em> method of
+    JSONArray, which takes the index as a parameter.</li>
+    <li>We extract the individual attributes of each object in turn and append them to the string "text".</li>
+    <li>Once we have looped through each object, we fill the TextView with the extracted text.</li>
+    </ul>
+</p>
+
+<h3>Summary of examples</h3>
+
+<p>There are two key classes which are used to handle JSON, <em>JSONArray</em> and <em>JSONObject</em>. Each of these have methods
+for extracting sub-elements. With JSONArray, we use numerical indices to extract sub-elements, whereas with 
+JSONObject, we use attribute names. Each has a range of methods for extracting sub-elements, examples of which include:
+    <ul>
+    <li><em>getDouble()</em> - extracts a double.</li>
+    <li><em>getInt()</em> - extracts an int.</li>
+    <li><em>getBoolean()</em> - extracts a boolean.</li>
+    <li><em>getJSONObject()</em> - extracts a JSON object from the current object or array.</li>
+    <li><em>getJSONArray()</em> - extracts a JSON array from the current object or array.</li>
+    </ul>
+</p>
+
+<h2>Exercise</h2>
+<p>
+As we saw last time, on Freemap is a web service which delivers
+music data. This web service can deliver JSON as well as XML or plain text.
+ Its address is <em>https://hikar.org/course/mad/ws/hits.php</em> and
+expects two query string parameters, <em>artist</em> (the artist) and <em>format</em> (the format: JSON, XML or plain text).
+For example, you can obtain all Oasis songs as JSON with:
+<pre>https://hikar.org/course/ws/hits.php?artist=Oasis&amp;format=json</pre>
+If you run the web service from your browser, it will show you the format of the JSON data which is sent back.
+</p>
+<p>
+Load your app from last time (which requested the data in 
+plain text format). Make a copy of your old code (commenting out the original
+copy of your old code) and nodify your code so that it
+requests the data as JSON instead, parses the JSON and shows the details of 
+all the matching songs in the TextView as plain text (not JSON!)
+</p>
+
+
+
+</body>
+</html>

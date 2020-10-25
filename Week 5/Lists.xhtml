@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development: Part 6:
+Lists</title>
+<link rel="stylesheet" type="text/css" href="./Lists_files/android.css" />
+</head>
+
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 6</h1>
+<h1>Lists</h1>
+</div>
+
+<p>In this section we will:
+    <ul>
+    <li>Look at how to create lists in Android and how to select items from them</li>
+    <li>Look at using custom Adapters to create lists with a custom appearance</li>
+    </ul>
+</p>
+
+<h2>ListViews and ListActivities</h2>
+<p>Apps frequently contain <em>lists</em> of items which the user can pick from. For example, a point-of-interest (POI)
+finding app might include a screen showing a list of POI categories, and this may subsequently lead to
+a further screen showing POIs in that category, for example pubs.
+These lists are represented by the <em>ListView</em> class which is a subclass of View.
+However, in most cases, a ListView will be the content view of a separate <em>Activity</em> and for
+that reason, lists can be conveniently implemented using the <em>ListActivity</em> class which automatically has an associated ListView. As explained 
+in <a href="https://edward2.solent.ac.uk/course/mad/part4.xhtml">part 4</a>, secondary activities (such as a ListActivity) can be launched from the main activity in response to a 
+menu option being selected. Here is some basic
+code for a <em>ListActivity</em>:
+<pre>
+import android.app.ListActivity;
+import android.os.Bundle;
+import android.widget.ListView;
+import android.view.View;
+
+public class ExampleListActivity extends ListActivity
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+    }
+    
+    public void onListItemClick(ListView lv, View view, int index, long id)
+    {
+        // handle list item selection
+    }
+}
+</pre>
+Much like normal Activities, ListActivities have an <em>onCreate()</em> method which runs when the activity is first
+created. The <em>onListItemClick()</em> method runs when the user selects one of the list items. It takes four parameters, 
+automatically filled in when the user selects an item:
+    <ul>
+    <li>The <em>ListView</em> holding all the list items (which normally you do not need to deal with directly if you are using a
+    ListActivity);</li>
+    <li>The <em>View</em> representing the individual list item being selected;</li>
+    <li>The index of the selected item within the ListView;</li>
+    <li>and the item ID (as specified in the XML) of the selected item, if it has one.</li>
+    </ul>
+</p>
+<h3>Adding data to a list</h3>
+<p>How do we actually add data to a list? We need to use an <em>adapter</em> to do this. An adapter is a class which links data to
+the user interface element used to display it. The role of the Adapter is to control how the data is displayed. It may be used in lists, but also in other UI widgets such 
+as the Spinner (dropdown list).
+There are various subclasses of Adapter; one of the most useful
+ones is the <em>ArrayAdapter</em> which maps arrays of data to lists, allowing the list to display each item in the array
+as a separate list item. ArrayAdapter is a generic type, i.e. you must specify what type of data the adapter is dealing with,
+for example String. Here is an example:
+<pre>
+<![CDATA[
+import android.app.ListActivity;
+import android.os.Bundle;
+import android.widget.ArrayAdapter;
+
+public class ExampleListActivity extends ListActivity
+{
+    String[] data;
+    
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        data = new String[] { "Firefox", "Chrome", "Internet Explorer" };
+        ArrayAdapter<String> adapter = new ArrayAdapter<String> (this, android.R.layout.simple_list_item_1, data);
+        setListAdapter(adapter);
+    }
+    
+    public void onListItemClick(ListView lv, View view, int index, long id)
+    {
+        // handle list item selection
+    }
+}
+
+]]>
+</pre>
+</p>
+<p>Note that the ArrayAdapter constructor takes three arguments: (ref: <a href="http://developer.android.com/reference/android/widget/ArrayAdapter.html">
+http://developer.android.com/reference/android/widget/ArrayAdapter.html</a>)
+    <ul>
+    <li>The Context to work with ("this" here, i.e. the Activity). Context is the superclass of Activity.</li>
+    <li>A resource ID referencing a TextView to use for the layout of the individual entries in the
+    list. The argument provided here (<em>android.R.layout.simple_list_item_1</em>) is a layout provided by Android which is suitable
+    for items in lists.</li>
+    <li>Finally, the actual data to go in the list, which here is an array of strings.</li>
+    </ul>
+</p>
+<p>Also note that having set up the adapter you have to specify that the ListActivity will use that adapter with:
+<pre>setListAdapter(adapter);</pre>
+The result of this will be that the ListView within the ListActivity will be filled with the strings in the array, i.e.
+"Firefox", "Chrome", and "Internet Explorer".
+</p>
+<h3>Custom list items</h3>
+<p>In many cases you might want to display list items in a different way to the default. For example, you might want to display a list
+of nearby points of interest and underneath the name of each point of interest, display its type (pub, restaurant etc),
+how far away it is and in what direction. How
+do we do this? We have to create our own subclass of <em>ArrayAdapter</em> and override the <em>getView()</em> method to return a View object
+containing the details. The 
+<em>getView()</em> method of ArrayAdapter is used to produce a View object representing each entry in the list; so if we override it, we
+can control how each entry is created. Here is an example. First we have to create a layout file in the resources, to define the
+layout of an individual item in the list:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent" android:layout_height="wrap_content"
+android:orientation="vertical">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12pt"
+android:id="@+id/poi_name" />
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="8pt"
+android:id="@+id/poi_desc" />
+</LinearLayout>
+]]>
+</pre>
+As can be seen this layout has two <em>TextViews</em>, one containing 12 point text and the other, 8 point text.
+This might be saved as, say, <em>poientry.xml</em>.</p>
+<p>
+Moving onto the code, we need to inherit from <em>ArrayAdapter</em> and write our own subclass with our
+own <em>getView()</em> method. The code below does this. Note how the <em>ArrayAdapter</em> subclass is an
+<em>inner class</em>, i.e. a class outside the class. The reason we do this is so that
+it can access all the data inside the ListActivity:
+<pre>
+<![CDATA[
+import android.app.ListActivity;
+import android.os.Bundle;
+import android.widget.ArrayAdapter; 
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.LayoutInflater;
+import android.widget.TextView;
+import android.widget.ListView;
+import android.content.Context;
+
+public class ExampleListActivity extends ListActivity
+{
+    String[] names, details;
+    
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        names = new String[] { "The Crown", "The Cowherds", "The Two Brothers", "Piccolo Mondo" };
+        details = new String[] { "pub, 2.5 miles north", "pub, 1.5 miles north",
+                            "pub, 3.5 miles northeast" , "Italian restaurant, 0.5 miles west" };
+        MyAdapter adapter = new MyAdapter();
+        setListAdapter(adapter);
+    }
+    
+    public void onListItemClick(ListView lv, View view, int index, long id)
+    {
+        // handle list item selection
+    }
+
+
+    public class MyAdapter extends ArrayAdapter<String>
+    {
+        public MyAdapter()
+        {
+            // We have to use ExampleListActivity.this to refer to the outer class (the activity)
+            super(ExampleListActivity.this, android.R.layout.simple_list_item_1, names);
+        }
+    
+        public View getView(int index, View convertView, ViewGroup parent)
+        {
+            LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View view = inflater.inflate(R.layout.poientry, parent, false);
+            TextView title = (TextView)view.findViewById(R.id.poi_name), detail = 
+                (TextView)view.findViewById(R.id.poi_desc);
+            title.setText(names[index]);
+            detail.setText(details[index]);
+            return view;
+        }
+    }
+}
+]]>
+</pre>
+</p>
+<p>
+Note how this is working:
+    <ul>
+    <li>In the constructor for MyAdapter, we call the superclass constructor of ArrayAdapter, passing in the ListActivity,
+    the built-in simple layout <em>android.R.layout.simple_list_item_1</em>
+	(the same as before - note this will be overridden by our custom views) and the list
+	of names (this will also be overridden by our custom views).
+    </li>
+	<li>We then write the <em>getView()</em> method. In <em>getView()</em> we write code to create our custom layout. It gets
+	called automatically for each entry in the list. It takes three parameters: 
+		<ul>
+		<li><em>index</em>: the index of the current list entry;</li>
+		<li><em>convertView</em>: this will be discussed below;</li>
+		<li><em>parent</em>: a <em>ViewGroup</em>. A ViewGroup is an object which can hold
+			more than one view; in our case it is the object holding the individual list items.
+			</li>
+		</ul>
+	</li>
+	</ul>
+</p>
+<p>To explain how the <em>getView()</em> method is working:
+	<ul>
+    <li>We obtain a <em>LayoutInflater</em> object. LayoutInflaters are used to inflate (expand) XML layout files into objects.</li>
+	<li>We then call the <em>inflate()</em> method of the LayoutInflater. This takes, as parameters:
+		<ul>
+		<li>an ID pointing to an XML file describing the custom layout of each list item,
+		i.e. our <em>poientry.xml</em> above. It will be <em>R.layout.poientry</em> in our case.</li>
+		<li>The second parameter is the parent object of our View. This is a <em>ViewGroup</em>.</li>
+		<li>The third parameter should always be false.</li>
+	</ul>			
+	The inflate() method returns a new View object representing the current list item.</li>
+    <li>We then need to fill this View object with the appropriate data, i.e. the name and description of the current point of interest.
+	To do this, we need to obtain the two TextViews within <em>poientry.xml</em> so that we can fill them in with the name and
+	description. We do this by using <em>findViewById()</em> using their IDs (remember from the XML that the IDs of the title and description are <em>poi_name</em> and
+    <em>poi_desc</em> respectively) </li>
+    <li>Using the <em>index</em> parameter supplied automatically to <em>getView()</em>, which represents the index of the current list entry,
+	we then set the text of these sub-views to the corresponding member of the arrays of titles and descriptions, so that the current list
+	entry is filled in with the appropriate data.</li>
+    <li>Finally we return the view that we have created.</li>
+    </ul>
+</p>
+<h3>Use of the convertView parameter</h3>
+<p>You might be thinking: what is this <em>convertView</em> parameter supplied to the <em>getView()</em> method? One issue with lists
+is that they might be long, and only a small part of the list is displayed on screen at any one time. The problem with our 
+<em>getView()</em> method as it stands is that it creates <em>a View object for every single list item</em>. Seeing as we only really
+need View objects for <em>those list items currently on screen</em>, this is wasteful in terms
+of memory usage and also in terms of time, as it takes CPU time to inflate an XML layout.
+So what we can do instead is reuse a previous View object, previously used to represent a list item currently off-screen. 
+If this is possible, the <em>convertView</em> parameter will contain a suitable View object and we can reuse that rather than
+inflate the XML layout to create a new View. Otherwise, it will be null (in which case we have to inflate the XML).
+Here is a modified example of <em>getView()</em> which uses <em>convertView</em>:
+<pre>
+<![CDATA[
+public View getView(int index, View convertView, ViewGroup parent)
+{
+    View view = convertView;
+    if(view==null)
+    {
+        LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        view = inflater.inflate(R.layout.poientry, parent, false);
+    }
+    TextView title = (TextView)view.findViewById(R.id.poi_name), detail = 
+                (TextView)view.findViewById(R.id.poi_desc);
+    title.setText(titles[index]);
+    detail.setText(details[index]);
+    return view;    
+}
+]]>
+</pre>
+</p>
+
+<h2>Exercise</h2>
+<ol>
+<li>With your map app from the previous topics,
+add a list activity to allow the user to select the map style (regular or 
+hike/bike map) as a sub-activity of the
+main activity. This should be launched
+from a <em>new</em> menu item from your <em>existing</em> map app
+activity: keep your existing menu items and sub-activities
+from last time. Launch the list activity with a <strong>request</strong> code 
+of 
+<em>0</em> - <strong>why?</strong> - 
+and in <em>onListItemClick()</em>, send either <em>true</em> or <em>false</em>
+back to the main activity using an Intent (the same as topic 4),
+depending on whether the hike/bike map or regular list item was selected.
+<strong>Comment out the code to read the map style preference in your onStart()
+as this will interfere with this code</strong> - or, if you are feeling 
+ambitious, try and resolve this issue.
+</li>
+<li>Use a custom adapter to give each map style entry a short description in addition to the title.</li>
+</ol>
+
+</body>
+</html>

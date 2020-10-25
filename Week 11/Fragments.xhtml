@@ -1,0 +1,897 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development Part 13: Fragments </title>
+<link rel="stylesheet" type="text/css" href="./Fragments_files/android.css" />
+</head>
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 13</h1>
+<h1>Fragments</h1>
+</div>
+
+
+<p>In this topic we will:
+    <ul>
+    <li>Consider differences between phones and tablets which led to the development of fragments
+    in Android 3.0+</li>
+    <li>Look at how to develop fragment-based applications</li>
+    <li>Look at how to make use of fragments to develop an application which works well on a phone
+    and a tablet</li>
+    </ul>
+</p>
+
+
+
+<h2>Introduction - the need for fragments</h2>
+
+<p>Originally, Android ran primarily on phones, and the model of a main activity for the main screen, followed by sub-activities
+for lists, preferences, and so on, worked well. However, after a while, Android tablets with larger screens started appearing. For tablets, having
+to navigate to a separate activity to choose one of a list of options, or to set preferences, is a little wasteful in terms of time: would it not be better for a tablet if the main activity and sub-activities shared screen space?
+For example, in an app which shows local restaurants, you could have a map on the main part of the screen and a sidebar containing a list
+allowing the user to select restaurant types (Chinese, Indian, etc). By contrast, on a phone the same app could have just the map on the 
+main screen and the list of restaurant types as a separate activity.</p>
+
+<p>So the question is, how can we do this? How can we develop an app in which two activities are on the main screen on a tablet, but on separate
+screens on a phone? The first thing to realise is that <em>we can never have more than one activity per screen</em>, so we cannot simply
+have two activities side by side. 
+Instead, we do this through the use of <em>fragments</em>. A <em>fragment</em> is a sub-section of an activity which performs a 
+specific job. So on the tablet, our main activity would contain two fragments (map and list) while on the phone, we would have two separate
+activities, each with <em>one</em> fragment (either the map or the list).</p>
+
+<p>This is illustrated in the diagrams below.</p>
+
+<h3>Phone layout</h3>
+<p><img src="./Fragments_files/phonelayout.png" alt="Phone layout - two separate activities, each with own fragment" /></p>
+
+<h3>Tablet layout</h3>
+<p><img src="./Fragments_files/tabletlayout.png" alt="Tablet layout - one activity with two side-by-side fragments" /></p>
+
+<h3>Landscape vs. portrait</h3>
+
+<p>The use of fragments is not restricted to tablets. Even if we are only interested in phones, in landscape mode
+we might be able to fit two side-by-side fragments into the activity, while in portrait mode we would have to use two activities each with their own fragment.
+Because you may not have access to a tablet, the examples will involve using a one-activity two-fragment layout in landscape mode and a
+two-activity one-fragment-per-each layout in portrait mode. However the principles apply equally to phone vs. tablet.</p>
+
+<h2>Developing fragment-based apps</h2>
+
+<p>We will work through the examples below in class. I will talk through the code and you will get the opportunity to build the application
+as I do so. If you start this yourself, ensure you specify the package <em>com.example.fragments</em> when creating the project.</p>
+
+<h3>Simple example - one activity, one fragment</h3>
+
+<p>To keep things simple, and gently introduce fragments, the first example will involve <em>one</em> fragment inside <em>one</em> activity.
+First we will look at the Activity. Because all the work (in this simple example) is now going on inside the
+Fragment, the activity simply has an empty onCreate() method which just calls the superclass version of onCreate():
+<pre>
+<![CDATA[
+package com.example.fragments;
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class FragActivity extends Activity
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate (savedInstanceState);
+        setContentView (R.layout.activity_main);
+    }
+}
+
+]]>
+</pre>
+</p>
+<p>
+Next the main layout file for the activity, activity_main.xml:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+<fragment class="com.example.fragments.PersonDetailsFragment"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:id="@+id/personDetailsFrag">
+
+</fragment>
+ 
+</LinearLayout>
+]]>
+</pre>
+Note how the layout file for the activity does not contain any "regular" user interface elements such as TextViews, but instead, one
+<em>fragment</em>, specified with a &lt;fragment&gt; tag. In this example, the fragment is occupying the whole of the activity,
+as the <em>layout_width</em> and <em>layout_height</em> are both set to "match_parent". </p>
+<p>Note how the fragment has an ID, <em>personDetailsFrag</em>: we will use this later on to get hold of the fragment from our Activity.</p>
+<p>
+Notice also how we have to specify the class of the fragment, which here is "com.example.fragments.PersonDetailsFragment"
+i.e. the class <em>PersonDetailsFragment</em> inside the <em>com.example.fragments</em> package.</p>
+<p>Now we come to the actual fragment itself, which is called
+<em>PersonDetailsFragment</em> as it will be later used to display details
+about a famous person selected by the user:
+<pre>
+<![CDATA[
+package com.example.fragments;
+
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class PersonDetailsFragment extends Fragment
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+    }
+    
+    public View onCreateView (LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState)
+    {
+        return inflater.inflate(R.layout.persondetailsfrag, parent);
+    }
+}
+]]>
+</pre>
+There are two methods, <em>onCreate()</em> (which does nothing except call the superclass method) and
+<em>onCreateView()</em>, which will be explained fully below. 
+It is important to understand that
+<strong>a typical fragment has a 
+layout XML file describing the UI elements within it, just like activities do.
+This file is separate to the layout file for the main activity.</strong> 
+Here is the XML layout file for this fragment (<em>persondetailsfrag.xml</em>):
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+<TextView android:id="@+id/tv1"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:text="@string/hello_world" /> <!-- imagine the string hello_world is defined as "Hello Fragment World!" in strings.xml -->
+
+</LinearLayout>
+]]>
+</pre>
+The layout is simple, containing a text view and nothing else.
+</p>
+<p>
+What is the role of
+the <em>onCreateView()</em> method of the fragment? 
+All fragments must define an
+<em>onCreateView()</em> method. This creates the main content View object (remember all UI elements which can be used as a main
+content view are subclasses of View)
+for the fragment and returns it. Note that the <em>onCreateView()</em> method takes a <em>LayoutInflater</em>
+object as a parameter. We use this to inflate an XML layout file and produce a View object. The XML layout file is the layout
+file we looked at just now, <em>persondetailsfrag.xml</em>, and so we refer to it using <em>R.layout.persondetailsfrag</em>.</p>
+<p>The result will be that when the app is run, the text "Hello Fragment World!" is displayed. The Fragment contains
+a TextView, and the text on the TextView is set to the string with the name "hello_world", which is set in strings.xml (not shown)
+to the string "Hello Fragment World!"</p>
+<h3>The Fragment lifecycle</h3>
+
+<p>Like Activities, Fragments define a lifecycle with several methods called one after the other. However, because Fragments need to associate with
+(<em>attach</em> to) their parent Activity, the lifecycle is a little more complex with a few more methods which relate to the association and
+dissociation with the Activity. The methods are as follows, in order of
+being called
+(ref <a href="http://developer.android.com/guide/components/fragments.html">Android article on Fragments</a>):
+    <ul>
+    <li><em>onAttach()</em> - this is called when the Fragment <em>attaches itself</em> to the parent Activity. The associated
+    Activity can be accessed via the Activity object passed to this method as a parameter. Alternatively, once attached, you can access the parent
+    Activity from the Fragment via the <em>getActivity()</em> method.</li>
+    <li><em>onCreate()</em> - similar in concept to Activity's onCreate(), this is called when the Activity is first created.</li>
+    <li><em>onCreateView()</em> - called when the View associated with the Fragment is to be created. As we have seen above, this must
+    create and return a View object associated with the Fragment; this may be either through inflating an XML layout (as above) or creating and
+    returning a subclass of <em>View</em> from code.</li>
+    <li><em>onActivityCreated()</em> - this is called as soon as the onCreate() method of the parent Activity has finished. We cannot be
+    certain that this has happened before this point. So any code in the Fragment which depends on the Activity's <em>onCreate()</em> finishing
+    must go in this method, or in <em>onStart()</em> or <em>onResume()</em> (below)</li>
+    <li><em>onStart()</em>, <em>onResume()</em>, <em>onPause()</em> and <em>onStop()</em> - similar to the equivalent methods in Activity</li>
+    <li><em>onDestroyView()</em> - when the View associated with the Fragment is destroyed</li>
+    <li><em>onDestroy()</em> - similar to the equivalent method in Activity</li>
+    <li><em>onDetach()</em> - when the Fragment is detached (dissociated) from its parent Activity.</li>
+    </ul>
+</p>
+
+<h3>Referencing the Activity from the Fragment and vice-versa</h3>
+<p>In most Fragment-based applications, we need to reference the Activity from the Fragment and vice-versa. This section looks at 
+how we can do this.</p>
+<h4>Activity from Fragment</h4>
+<p>Frequently we must access the parent Activity from the Fragment. Remember from previous
+topics that many Android UI features (such as the <em>AlertDialog</em>s or <em>Toast</em>s, for instance) expect a subclass of <em>Context</em>
+when we are creating them.
+However, Fragment is <em>not</em> a subclass of Context. So if we want to create an AlertDialog or a Toast in a Fragment, we need to pass in the parent Activity.
+Luckily this is easy to obtain via the <em>getActivity()</em> method of Fragment. Alternatively, the <em>onAttach()</em> method, which runs when the 
+Fragment is attached to the Activity, contains the Activity as a parameter.
+</p>
+<h4>Fragment from Activity</h4>
+<p>We might also want to access a Fragment from the parent Activity. For example, an app's menu is associated with the Activity, rather than a
+Fragment, so the code to handle menu items would have to go into the Activity - but we might want to update the contents of a Fragment
+as a result. Therefore, we need to access a given Fragment from the Activity.</p>
+<p>To do this, we need to work through the <em>FragmentManager</em> object. The <em>FragmentManager</em> is - as the name implies, an object which
+we can use to manage Fragments from an Activity. It can be obtained through the Activity's <em>getFragmentManager()</em> method. Here is an example
+of accessing a given Fragment from the Activity. Replace the original <em>onCreate()</em> of the <em>Activity</em> with this new version and
+add the <em>setText()</em> method to the Fragment:
+<pre>
+<![CDATA[
+// in the Activity
+public void onCreate (Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView (R.layout.activity_main);
+    PersonDetailsFragment personDetailsFrag = (PersonDetailsFragment)getFragmentManager().findFragmentById(R.id.personDetailsFrag);
+    personDetailsFrag.setText("Details on a famous person will appear here!");
+}
+
+]]>
+</pre>
+<pre>
+<![CDATA[
+
+// in the Fragment
+public void setText(String newText)
+{
+    TextView tv1 = (TextView) getView().findViewById(R.id.tv1);
+    tv1.setText(newText);
+}
+]]>
+</pre>
+Note how this is working. In the Activity's <em>onCreate()</em>,
+we call the <em>findFragmentById()</em> method of the <em>FragmentManager</em> and supply the ID of the fragment
+(as discussed above, the &lt;fragment&gt; tag in the activity's layout file has an ID of <em>personDetailsFrag</em>,
+so we can reference it in code with <em>R.id.personDetailsFrag</em>). This method will return an object of type <em>Fragment</em> (as any subclass of Fragment
+could potentially be returned) so if we want to use specific methods of <em>PersonDetailsFragment</em>, we need to <em>cast</em> the returned object
+to <em>PersonDetailsFragment</em>.</p>
+<p>Having obtained our PersonDetailsFragment we then call the <em>setText()</em> method of PersonDetailsFragment (shown above) and pass in some example
+text. The <em>setText()</em> method of PersonDetailsFragment is simple: it finds the TextView with the ID of <em>tv1</em> (remember this is inside the
+Fragment's XML layout) and sets its text to the text passed in.
+Note how we have to use the method <em>getView()</em>, this is because
+Fragments are not Views and <em>findViewById()</em> is a method of View, 
+so we need to get hold of the View associated with
+the Fragment.</p>
+
+<h3>Exercise 1</h3>
+<p>Write a map application containing an activity with one fragment. It should have three menu items:
+    <ul>
+    <li>London</li>
+    <li>Paris</li>
+    <li>New York</li>
+    </ul>
+When the user selects each, the map view (in the <em>fragment</em>) should be set to the appropriate latitude and
+longitude:
+    <ul>
+    <li>London: latitude 51.51, longitude -0.1</li>
+    <li>Paris: latitude 48.85, longitude 2.34</li>
+    <li>New York: latitude 40.75, longitude -74</li>
+    </ul>
+</p>
+<p><em>How to do this:</em> 
+    <ul>
+    <li>Create a new project with a 
+    basic activity, an activity layout containing a fragment,
+    and a layout for your Fragment, as in the examples above. The Fragment
+    layout should include a MapView (i.e. it should be the same as the
+    Activity layout of your map application in previous examples)</li>
+    <li>Create a class inheriting from <em>Fragment</em> and give it an
+    <em>onCreate()</em> and <em>onCreateView()</em>, as in the example
+    above. The <em>onCreateView()</em> should inflate the fragment, in
+    exactly the same way as the example.</li>
+    <li>Add a MapView as an attribute of your Fragment.</li>
+    <li>Initialise the 
+    MapView object in the <em>onActivityCreated()</em> method of
+    your <em>Fragment</em>. 
+    It needs to go here, as we know that the activity has been
+    fully created when <em>onActivityCreated()</em> is called, and any 
+    earlier, the activity might not be fully initialised and the layout may
+    not be set up correctly:
+    <pre>
+    public void onActivityCreated(Bundle savedInstanceState)
+    {
+        super.onActivityCreated(savedInstanceState);
+        Activity activity = getActivity();
+        // Now you have an activity, you can create the map as before...
+    }</pre>
+    </li>
+    <li>Write a method of your Fragment which takes a latitude/longitude
+    and set's the map's position to the latitude/longitude passed in.</li>
+    </ul>
+</p>
+
+<h3>ListFragments and PreferenceFragments</h3>
+
+<p>Common uses of Fragments include lists and preferences. For this reason, there are specific
+subclasses of Fragment which deal with lists and preferences: <em>ListFragment</em> and
+<em>PreferenceFragment</em>. Using these, you do not need to write your own <em>onCreateView()</em>
+as they already have their own version.</p>
+
+<p>Using <em>ListFragment</em> is very similar to <em>ListActivity</em>. Here is an example:
+<pre>
+<![CDATA[
+package com.example.fragments;
+
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.app.ListFragment;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.view.View;
+import android.widget.Toast;
+
+public class ListFrag extends ListFragment 
+{
+    String[] entries =  { "Tim Berners-Lee", "John Lennon", "Linus Torvalds", "Barack Obama"},
+            entryValues = { "Inventor of the World Wide Web.", "Singer and songwriter from the Beatles whose life was cut tragically short in 1980.",
+                            "Original developer of Linux.", "Current president of the US." };
+    
+    public void onCreate (Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<String> (this.getActivity(),  android.R.layout.simple_list_item_1, entries);
+        setListAdapter(adapter);
+    }
+
+    
+    public void onListItemClick(ListView lv, View v, int index, long id)
+    {
+        Toast.makeText(getActivity(), entryValues[index], Toast.LENGTH_LONG).show();
+    }
+}
+]]>
+</pre>
+Hopefully you can see that the ListFragment works in the same way as a ListActivity: an ArrayAdapter is created and set to be the fragment's
+adapter using <em>setListAdapter()</em>. We also write an <em>onListItemClick()</em> to handle the selection of list items. For the moment
+this simply shows a Toast displaying the corresponding entry in the <em>entryValues</em> array.</p>
+<p>
+<em>PreferenceFragment</em> is very similar in the sense that it works in the same way as <em>PreferenceActivity</em> with a
+call to <em>addPreferencesFromResource()</em>, e.g:
+<pre>
+<![CDATA[
+import android.app.Activity;
+import android.preference.PreferenceFragment;
+import android.os.Bundle;
+
+public class PrefFragment extends PreferenceFragment
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.preferences);
+    }
+}
+]]>
+</pre>
+</p>
+
+<h2>Building a fragment-based app for landscape and portrait</h2>
+
+<p>We have now covered the basics of fragments. We are now going to look at something a bit more complex: a fragment-based app which works
+effectively on both phones (landscape and portrait mode) and tablets.
+ In portrait orientation, there will be two activities, each with their
+own fragment. In landscape orientation (and potentially with a tablet, though we will focus on landscape on a phone for easy testing) there will be
+a single activity, with two fragments side-by-side. The example will use a ListActivity to select one of a range of famous people, and a 
+(very short!) biography will then appear in a second activity. </p>
+
+<p>Before we do this, however, we will make the activity have two fragments
+in <em>both portrait and landscape mode</em> to keep things simple.</p>
+
+<h3>Building a two-fragment activity</h3>
+
+<p>First, we will develop a two-fragment activity. The list activity will be 
+on the left and the main view on the right. 
+When the user selects an item in the list, information on that person will appear in the main view. We want the main view
+to be twice the width of the list. How do we do this? The first step is to look at the layout XML file
+for the activity:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+<fragment class="com.example.fragments.ListFrag"
+android:layout_width="0px"
+android:layout_height="match_parent"
+android:layout_weight="1"
+android:id="@+id/listFrag">
+
+</fragment>
+
+<fragment class="com.example.fragments.PersonDetailsFragment"
+android:layout_width="0px"
+android:layout_height="match_parent"
+android:layout_weight="2"
+android:id="@+id/personDetailsFrag">
+
+</fragment>
+
+
+</LinearLayout>
+]]>
+</pre>
+There are two fragments, one an instance of the <em>ListFrag</em> class (to be introduced below) and the other an instance of
+<em>PersonDetailsFragment</em> (which we have already created).
+The main thing to note here is that the fragments both have a layout width of <em>0 pixels</em>. Why is this?
+We want to ensure that the fragment containing the main view (listFrag) is twice the width of the list fragment
+(fragment 1). An easy way to do this is to give each fragment (this technique is not restricted to fragments, it can
+be used for other UI elements) a <em>layout_weight</em>. The <em>layout_weight</em> indicates the relative proportion of each
+component to the others, so here, the second fragment is twice as wide as the first. However, because layout_width
+is a compulsory attribute, we have to give it a value. To avoid unnecessary computations which are then overridden
+by <em>layout_weight</em>, we simply set it to 0 pixels rather than one of the usual values such as <em>match_parent</em> 
+or <em>wrap_content</em>.</p>
+
+<h3>Layouts for the fragments</h3>
+
+<p>The layouts for the fragments are unchanged from what we have seen already. The ListFragment does not need a layout (as this is included in
+ListFragment by default) while the main fragment will have the same layout as in the first example, with a single TextView.</p>
+
+<p>Try this out.</p>
+
+<h3>Updating the main fragment when a list item is selected</h3>
+
+<p>We must now ask: 
+how can we update the main fragment when an item in the list fragment
+is clicked? 
+<!--The main thing to be aware here is that fragments should be <em>independent entities</em> which can be <em>reused in different
+activities</em>. Code like the example below - in which information is
+sent back to the Activity from the ListFragment when a list item is selected.
+and then forwarded to the other fragment - would work,
+but would be a <em>bad</em> idea:
+-->
+The following would work:
+<pre>
+<![CDATA[
+// in the Activity
+public void receiveText (String text)
+{
+    PersonDetailsFragment personDetailsFrag = (PersonDetailsFragment)getFragmentManager().findFragmentById(R.id.personDetailsFrag);
+    personDetailsFrag.setText(text);
+}
+]]>
+</pre>
+<pre>
+<![CDATA[
+// in the ListFragment
+package com.example.fragments.fragtest;
+
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.app.ListFragment;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.view.View;
+
+public class ListFrag extends ListFragment 
+{
+    String[] entries =  { "Tim Berners-Lee", "John Lennon", "Linus Torvalds", "Barack Obama"},
+            entryValues = { "Inventor of the World Wide Web.", "Singer and songwriter from the Beatles whose life was cut tragically short in 1980.",
+                            "Original developer of Linux.", "Current president of the US." };
+    
+    public void onCreate (Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<String> (this.getActivity(),  android.R.layout.simple_list_item_1, entries);
+        setListAdapter(adapter);
+    }
+
+    
+    public void onListItemClick(ListView lv, View v, int index, long id)
+    {
+        FragActivity activity = (FragActivity)getActivity();
+        activity.receiveText(entryValues[index]);
+    }
+}
+]]>
+</pre>
+In this code, we are getting hold of the main activity (a FragActivity) in 
+<em>onListItemClick()</em> and calling a method of FragActivity
+called <em>receiveText()</em> (which sends
+ the supplied text through to the other fragment).
+<!--
+However this is a poor idea as it <em>couples</em> ListFrag
+to FragActivity. We might want to <em>reuse this fragment in another
+application</em>. So we need some way of saying "send the text to some object - we don't care what it is -
+which will pass the text onto whatever fragment is responsible for displaying it".</p>
+<p>This is actually a very good use for an <em>interface</em>. We can define an <em>interface</em> with a method called
+<em>receiveText()</em>:
+<pre>
+public interface TextReceiver
+{
+    public void receiveText(String text);
+}
+</pre>
+and just send the text back to some object (we don't care what) which <em>implements TextReceiver</em>.
+(We have called the interface <em>TextReceiver</em> because it is receiving text from the list fragment).
+It has one method, <em>receiveText()</em>, which takes the text as a 
+parameter.
+ So we could have code like this in our ListFrag class:
+
+
+<pre>
+<![CDATA[
+package com.example.fragments.fragtest;
+
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.app.ListFragment;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.view.View;
+
+public class ListFrag extends ListFragment 
+{
+    String[] entries =  { "Tim Berners-Lee", "John Lennon", "Linus Torvalds", "Barack Obama"},
+            entryValues = { "Inventor of the World Wide Web.", "Singer and songwriter from the Beatles whose life was cut tragically short in 1980.",
+                            "Original developer of Linux.", "Current president of the US." };
+    
+    public void onCreate (Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<String> (this.getActivity(),  android.R.layout.simple_list_item_1, entries);
+        setListAdapter(adapter);
+    }
+
+    
+    public void onListItemClick(ListView lv, View v, int index, long id)
+    {
+        // We're assuming our main activity is class "FragActivity"
+        FragActivity a = (FragActivity)getActivity();
+        a.receiveText(entryValues[index]);
+    }
+}
+]]>
+</pre>
+-->
+</p>
+
+<h4>Writing the receiveText() method</h4>
+<p>What we now need to do
+is write a <em>receiveText()</em> method in the
+main activity which 
+forwards the text onto the viewing fragment.
+For example:
+<pre>
+<![CDATA[
+
+import android.app.Activity;
+import android.os.Bundle;
+
+public class FragActivity extends Activity
+{
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate (savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+    
+    public void receiveText (String text)
+    {
+        PersonDetailsFragment frag = (PersonDetailsFragment)getFragmentManager().findFragmentById(R.id.personDetailsFrag);
+        frag.setText(text);
+    }
+}
+]]>
+</pre>
+The code should hopefully be easy to follow. The <em>receiveText()</em> method simply takes the text, finds the viewing
+fragment using the FragmentManager, and calls its <em>setText()</em> method (which we added above).</p>
+<p>So that's it for creating an app with two fragments side-by-side! Try out the example. However, what we now need to do is tackle the more complex
+case of making it compatible with both landscape (one activity, two fragments) and portrait (two activities, one fragment each).
+</p>
+<!--
+<h3>Problem with example above</h3>
+<p>The problem, however, with the example above is that the fragment is
+<em>tightly coupled</em> to FragActivity. Fragments should really be
+<em>reusable</em>. A better approach would be to write an
+<em>interface</em> which specifies the <em>receiveText()</em> method
+(e.g. <em>TextReceiver</em>)
+and make the fragment reference the interface rather than the FragActivity.
+Then the fragment could be used with any activity implementing this
+interface. See <a href='interfaces.php'>here</a> for more on interfaces.</p>
+-->
+<h3>Making the app compatible with both landscape and portrait modes</h3>
+<h4>Separate layouts for the main activity</h4>
+<p>The first thing we must do is to create <em>two separate layouts for the main activity</em>, one for landscape and one
+for portrait. How can we do this? The method involves creating 
+separate folders inside <em>res</em>
+called <em>layout-port</em> (for portrait) and <em>layout-land</em> (for landscape) in your project, and putting the layouts which only relate to portrait or landscape mode (i.e. activity layouts) in there.  Layouts which apply to both (i.e. the fragment layouts or any activities common to both), would go inside the normal <em>layout</em> folder. 
+</p>
+<!--
+<p>Timg src="images/multilayouts.png" alt="Multiple landscape/portrait layouts" /></p>
+-->
+<p>The layout above can be used as our <em>layout-land</em> layout.
+The <em>layout-port</em> layout would just contain the list fragment:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+<fragment class="com.example.fragments.ListFrag"
+android:layout_width="0px"
+android:layout_height="match_parent"
+android:layout_weight="1"
+android:id="@+id/listFrag">
+
+</fragment>
+
+</LinearLayout>
+]]>
+</pre>
+
+<h3>One fragment in portrait, two in landscape</h3>
+
+<p>We will now look at a more complex, "real-world" example: how to
+create an app which has <em>one</em> fragment per activity in portrait
+mode but <em>two</em> in landscape.</p>
+<h4>Layout in landscape mode</h4>
+<p>The landscape layout in this case would be the same as that above,
+with two fragments in horizontal orientation.</p>
+<h4>Layout for the activities in portrait mode</h4>
+<p>In portrait mode, we need two separate activities, one for the main screen 
+(which will be the list)
+and a secondary activity to show the details of the person. For the main screen, the XML would look like this, as we have seen:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+
+<fragment android:id="@+id/listFrag"  android:layout_width="wrap_content" android:layout_height="wrap_content" 
+    class="com.example.fragments.ListFrag"> </fragment>
+    
+</LinearLayout>
+</body>
+</html>
+]]>
+
+</pre>
+while for the secondary activity, which shows the details of the selected 
+person, the XML (which we will call <em>persondetails.xml</em>)
+would look like this:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <fragment android:id="@+id/personDetailsFrag" android:layout_height="wrap_content"
+    android:layout_width="wrap_content" class="com.example.fragments.PersonDetailsFragment">
+    
+    
+   
+    </fragment>
+    
+</LinearLayout>
+]]>
+</pre>
+These should be easy to understand, as they are simple layouts with one fragment
+(either  ListFrag, our list fragment or PersonDetailsFragment, our "person details" fragment).
+</p>
+<h4>Code for the main activity</h4>
+<p>We need to add new code now to the main (list) activity so that different things happen depending on whether we are in 
+portrait or landscape mode. The code for FragActivity would now look like this:
+<pre>
+<![CDATA[
+package com.example.fragments;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.content.Intent;
+import android.util.Log;
+
+public class FragActivity extends Activity 
+ {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(]]><![CDATA[savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
+    
+    public void receiveText(String value)
+    {
+        PersonDetailsFragment frag = (PersonDetailsFragment)this.getFragmentManager().findFragmentById(R.id.personDetailsFrag);
+        
+        if (frag == null || !frag.isInLayout())
+        {
+            Intent intent = new Intent (this, PersonDetailsActivity.class);
+            intent.putExtra("contents", value);
+            startActivity(intent);
+        }
+        else
+        {
+            
+            // set its contents
+            frag.setText(value);
+        }
+    }
+}
+]]>
+</pre>
+Note how the <em>receiveText()</em> method has some extra logic to deal with the difference between portrait and landscape:
+    <ul>
+    <li>We first try to find the fragment with the ID of <em>personDetailsFrag</em>. (the fragment which will contain the
+    person details, i.e. PersonDetailsFragment)</li>
+    <li>If the fragment does not exist yet (when the activity first starts up in portrait mode) or if it is not in the layout of the
+    current activity (this will happen if we rotate from portrait to landscape and back to portrait - the fragment will exist but
+    will not be within the current activity's layout as the current activity only contains the list fragment) then we
+    <em>launch a second activity</em> to display the text. This is done in the same way as usual, i.e create an Intent
+    for that activity (class PersonDetailsActivity), add an extra (the text to display),
+    and start the activity using that intent.</li>
+    <li>If the fragment <em>is</em> within the current activity then we call its <em>setText()</em> method, as before.</li>
+    </ul>
+</p>
+<h4>Code for the second activity</h4>
+<p>Lastly, we must consider the code for the second activity (in portrait mode), which shows the person details. As we saw above,
+this is launched by <em>receiveText()</em> from the main activity if the person details fragment does not exist within the main
+activity. Here is the code for the second activity:
+<pre>
+<![CDATA[
+package com.example.fragments;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.content.Intent;
+import android.app.FragmentManager;
+import android.app.Fragment;
+
+
+public class PersonDetailsActivity extends Activity
+{
+    
+    public void onCreate (Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        
+
+        if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) 
+        {
+            finish();
+            return;
+        }
+        
+        setContentView(R.layout.persondetails);
+        
+        Intent intent = this.getIntent();
+        if(intent!=null)
+        {
+            String value = intent.getExtras().getString("contents");
+            if(value==null)
+                value = "Contents not found";
+            PersonDetailsFragment frag = (PersonDetailsFragment)getFragmentManager().findFragmentById(R.id.personDetailsFrag);
+            frag.setText(value);
+        }
+    }
+
+}
+
+]]>
+</pre>
+Most of this is fairly straightforward: we read the intent, extract the text from it, and send it on to <em>PersonDetailsFragment</em>.
+The only section of code that you may not understand is this:
+<pre>
+<![CDATA[
+if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) 
+{
+    finish();
+    return;
+}
+]]>
+</pre>
+This (taken from <a href="http://www.vogella.com/tutorials/AndroidFragments/article.html">Lars Vogel (vogella)'s article on fragments</a>), 
+is saying "if the orientation is landscape, finish the activity". Why do we want to do this? The
+reason is that if we rotate the phone from portrait to landscape when this second activity is being displayed, the second activity is
+recreated. This is because every time the device is rotated, the current activity is recreated again and onCreate() is called once more.
+However, in landscape, we do not <em>want</em> this second activity to appear (because both fragments are on the main activity).
+Instead, we want the main activity to appear. So, if we rotate to landscape while the second activity is being displayed, we
+finish the second activity, which will mean the main activity will re-appear (as the second activity was launched from the main activity).</p>
+
+<h3>Tablets</h3>
+
+<p>The same principle applies when developing an app with two fragments side-by-side on a tablet,
+but in separate activities on a phone. We define separate layouts for tablets and for phones, and place them in different
+<em>layout</em> folders as before. How is this done? 
+</p>
+<p>
+<em>Size qualifiers</em> are used: they are
+described in full detail
+<a href="http://developer.android.com/guide/practices/screens_support.html">on the Android site</a>. Size qualifiers relate to the dimensions of
+the device.</p>
+<p>A useful size qualifier is the <em>available screen width</em> qualifier. This specifies the minimum width that the device
+must have for the given layout to apply. The width is relative to the current orientation (portrait or landscape) rather than of the
+device in its default orientation. This size qualifier is specified by the notation <em>wNNNdp</em> where
+NNN is the minimum width. For example a qualifier of <em>w600dp</em> would mean that the current width of the device needs to be at least 600dp. 
+(What is a "dp"? see "Density-independent pixels", below).
+So we would need to create a folder called <em>layout-w600dp</em> to contain layouts which will apply only if the screen currently has
+a width of 600dp or more. (As described in the Android article above, 600dp is the typical width of a
+7-inch tablet, while 720dp is the typical width of a 10-inch tablet).</p>
+
+<h3>Density-independent pixels</h3>
+
+<p>What is the "dp" unit we are using to measure size? It is a <em>density-independent pixel</em>: more details can be found
+<a href="http://developer.android.com/guide/practices/screens_support.html">on the Android site</a>.
+The idea of the <em>dp</em> unit is to give UI elements with the same number of<em>dp</em> the same apparent width on screens with different
+pixel density. If we were to use plain pixels, then a UI element with 80 pixels would occupy half an inch (approx 1.25cm) on a 
+device with a density of 160 dots per inch, but would occupy one inch (approx 2.5cm) on a device with a density of 80 dots per
+inch. The <em>dp</em> unit can be converted to pixels as follows 
+(ref: <a href="http://developer.android.com/guide/practices/screens_support.html">Android site</a>):
+<pre>pixels = dp * (dpi / 160)</pre>
+In other words, at 160 dpi density, a pixel is the same as a <em>dp</em>, but on higher-density screens, a given number of <em>dp</em> would be equivalent to
+a larger number of pixels, and on lower-density screens, a given number of <em>dp</em> would be equivalent to a smaller number of pixels
+(as we would expect).</p>
+
+<h3>Exercise 2</h3>
+
+<p>Create a two-fragment-based mapping activity. Like the example above, there should be two fragments, one containing a list (of places), and another
+for the main view. The main fragment should display a map. The list should contain the following entries:
+    <ul>
+    <li>London</li>
+    <li>Paris</li>
+    <li>New York</li>
+    </ul>
+When the user selects each entry, the map should be centred on that city. The latitude and longitude (source: <a href="http://www.informationfreeway.org/">
+informationfreeway.org</a>) of each is:
+    <ul>
+    <li>London: latitude 51.51, longitude -0.1</li>
+    <li>Paris: latitude 48.85, longitude 2.34</li>
+    <li>New York: latitude 40.75, longitude -74</li>
+    </ul>
+</p>
+
+<h2>Handling configuration changes</h2>
+
+<p>A switch in orientation from portrait to landscape, or vice-versa, is referred to as a <em>configuration change</em>. An important point about
+configuration changes is that they result in the <em>recreation of an activity</em> with the result that <em>onCreate()</em> is called again.
+This could potentially mean that if onCreate() loads data from the web, for example, that data is wastefully reloaded each time the user rotates
+the device. Previously, before fragments, this meant that you had to detect configuration changes and handle them manually, using a pair of methods 
+<em>onRetainNonConfigurationInstance()</em> and
+<em>getLastNonConfigurationInstance()</em>.</p>
+
+<p>However, if you use fragments it's a bit easier. Like activities, fragments are re-initialised when the device rotates and <em>onCreate()</em>
+is called again.
+However, there is a way of preventing this. You then call the <em>setRetainInstance()</em> method with an argument of <em>true</em> in the fragment's
+onCreate() method. <em>setRetainInstance()</em> prevents re-initialisation of the fragment and, consequently, also prevents any data associated with
+the fragment being marked for deletion by the garbage-collector. For example:
+<pre>
+public class MyFrag extends Fragment
+{
+    Data dataLoadedFromWeb;
+    
+    public void onCreate (Bundle savedInstanceState)
+    {    
+        <em>setRetainInstance(true);</em>
+        
+        // Imagine loadDataFromWeb() is a method (not shown) which loads the data from the web.
+        dataLoadedFromWeb = loadDataFromWeb();
+    }
+}
+</pre>
+Note how the fragment contains a variable <em>dataLoadedFromWeb</em> of type <em>Data</em> as an attribute. Imagine that this is
+a large amount of data, loaded from the web. However, now we have called <em>setRetainInstance()</em> with
+an argument of <em>true</em>, the fragment will not be recreated if the device is rotated. The <em>onCreate()</em> of the fragment will
+not be re-run (the onCreate() of the <em>activity</em> will, however). So, because the data is an attribute of the <em>fragment</em>, not the
+activity, the data will be retained in memory and will not be reloaded when the configuration changes.</p>
+</p>
+
+
+</body>
+</html>

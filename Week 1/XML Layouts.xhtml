@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development: Part 2:
+Adding Interactivity, Layouts</title>
+<link rel="stylesheet" type="text/css" href="./XML Layouts_files/android.css" />
+</head>
+
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 2</h1>
+<h1>Adding Interactivity, Layouts</h1>
+</div>
+
+<p>In this section we will:
+	<ul>
+	<li>Extend our application by actually making it do something!</li>
+	<li>Introduce layouts</li>
+	</ul>
+</p>
+<h2>Making our app do something!</h2>
+<p>OK our app says 'Hello World'. And we've translated it into another language. But it doesn't yet actually
+<em>do</em> anything.
+In this exercise you will add some <em>interactivity</em> by developing a simple application
+to convert feet to metres. <strong>Create a new project</strong> and call the main activity
+<strong>FeetToMetresActivity</strong>. Replace the auto-generated code with this code
+(obviously change the package name to that appropriate in your case):
+<pre>
+<![CDATA[
+package whatever.your.package.is; 
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.Button;
+import android.view.View.OnClickListener;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.EditText;
+
+
+public class FeetToMetresActivity extends AppCompatActivity implements OnClickListener {
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);        
+        setContentView(R.layout.activity_main);
+        Button b = (Button)findViewById(R.id.btn1);
+        b.setOnClickListener(this);
+    }
+    
+    public void onClick(View view)
+    {
+    	TextView tv = (TextView)findViewById(R.id.tv1);
+    	EditText et = (EditText)findViewById(R.id.et1);
+    	double feet = Double.parseDouble(et.getText().toString());
+    	double metres = feet*0.305;
+    	tv.setText("In metres that is: " + metres);
+    }
+}
+]]>
+</pre>
+and also change your <em>activity_main.xml</em> layout file to look like this:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+<EditText
+    android:layout_width="match_parent" 
+    android:layout_height="wrap_content" 
+    android:inputType="numberDecimal"
+    android:id="@+id/et1"
+    />
+
+ <Button android:layout_width="wrap_content" android:layout_height="wrap_content"
+ android:id="@+id/btn1" android:text="@string/convertBtn" />
+
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:id="@+id/tv1"/>
+
+</LinearLayout>
+
+]]>
+</pre>
+and finally add the following line to your strings file:
+<pre>
+<![CDATA[
+<string name="convertBtn">Convert!</string>
+]]>
+</pre>
+</p>
+<p>So how is this working? Let's start with the layout file as that's probably the simplest.
+Note how we now have three components: an <em>EditText</em> (editable text field), a
+<em>Button</em> and a <em>TextView</em>. Also note that each has been given an ID:
+<em>et1</em>, <em>btn1</em> and <em>tv1</em> respectively. We will use these IDs to access
+each component from our Java code. </p>
+<p>Also note how we have specified the layout for each component. In particular, note
+the different layout specifiers <em>match_parent</em> and <em>wrap_content</em>. As seen
+above, the former specifies that the component will fill the entire space of its parent
+component. Note how for the edit text and the text view, we set the width to 
+<em>match_parent</em> so that the component fills the entire width of the parent (the screen
+in this case); however, note the height is set to <em>wrap_content</em>. This means that
+the component will use up as much space is required, and if its content exceeds the space
+available to it, it will be wrapped to the next line.</p>
+<p>Finally notice that the <em>EditText</em> has an <em>inputType</em>
+attribute. This specifies what type of data will be entered in the EditText.
+Here we have set it to <em>numberDecimal</em> to indicate that it can only
+be used for entering decimal numbers. Some other types:
+	<ul>
+	<li><em>text</em> - the default. Allows text and numeric entry.</li>
+	<li><em>number</em> - positive whole numbers.</li>
+	<li><em>numberSigned</em> - positive and negative whole numbers.</li>
+	</ul>
+You can combine types with the "or" symbol |, e.g.
+<em>numberDecimal|numberSigned</em> would allow entry of positive and 
+negative decimal numbers.</p>
+<h3>On to the Java code</h3>
+<p>OK, how about the actual Java code? First of all note how we access the user interface
+components from Java. We use code such as:
+<pre>Button button = (Button)findViewById(R.id.btn1);</pre>
+Note how the <em>findViewById()</em> method takes in an ID and returns the corresponding
+component. The ID matches the IDs that we specified in the XML file; for instance, our
+button was given an ID of <em>btn1</em> so we reference it in code with
+<em>R.id.btn1</em>. If you look at the <em>R.java</em> file now, you'll notice that 
+static attribues for each of our IDs have been generated, containing hex values.</p>
+<p>Also note that <em>findViewById()</em> returns an object of type <em>View</em> (Buttons and
+other user interface elements are subtypes of <em>View</em>)
+so we have to <em>cast</em> (convert) it to the appropriate type using code such as:
+<pre>Button b = <em>(Button)</em>findViewById(R.id.btn1);</pre>
+The <em>(Button)</em> is the cast (conversion) from View to Button.
+Later in the unit you will
+understand in more detail what is happening here.</p>
+<h3>Event handling</h3>
+<p>Obviously we need to make something happen when the user clicks the button! If you have
+worked with Java Swing or AWT, the approach taken by Android should be quite familiar.
+We attach a <em>listener object</em> to the button and then define an <em>event handler</em>
+method within the listener object to react to the event. The listener object is attached
+with this code:
+<pre>b.setOnClickListener(this);</pre>
+This indicates that the current object (<em>this</em>) will act as the listener object for
+the button. The listener object must implement the <em>OnClickListener</em> interface
+(hence the addition of <em>implements OnClickListener</em> to the class declaration for
+our main Activity) and provide a method called <em>onClick()</em> which takes one parameter:
+the View object which generated the event. The <em>onClick()</em> method runs when we click
+on the button. To reproduce the code:
+<pre>
+ public void onClick(View view)
+ {
+    TextView tv = (TextView)findViewById(R.id.tv1);
+    EditText et = (EditText)findViewById(R.id.et1);
+    double feet = Double.parseDouble(et.getText().toString());
+    double metres = feet*0.305;
+    tv.setText("In metres that is: " + metres);
+}
+</pre>
+Hopefully this should be fairly straightforward. We obtain the TextView and EditText
+components using their ID, just like we did with the Button. We then convert the contents
+of the EditText to a <em>double</em> (high precision floating point number) so that we
+can perform the calculation on it:
+<pre>double feet=Double.parseDouble(et.getText().toString());</pre>
+Note that unlike the equivalent in Swing, the <em>getText()</em> method of EditText does
+not directly return a String, but returns an object of type <em>Editable</em>. We then need
+to call <em>toString()</em> on the Editable to get the actual text out of the text field,
+and finally convert it to a <em>double</em> using <em>Double.parseDouble()</em>.</p>
+<p>Then we convert the feet to metres and stick the result in the TextView.</p>
+<h3>Changing the layout</h3>
+<p>We're now going to experiment with some slightly more complex layouts. Firstly we're
+going to make the button and the TextView appear on the same line, as follows:
+<br />
+<img src="./XML Layouts_files/layout2.png" alt="Layout within layout" />
+<br />
+To do this we
+create a <em>layout within a layout</em>, as follows:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+<EditText
+    android:layout_width="match_parent" 
+    android:layout_height="wrap_content" 
+	android:inputType="numberDecimal"
+    android:id="@+id/et1"
+    />
+
+ <LinearLayout android:orientation="horizontal"
+  android:layout_width="match_parent" android:layout_height="wrap_content">
+
+ <Button android:layout_width="wrap_content" android:layout_height="wrap_content"
+ android:id="@+id/btn1" android:text="@string/convertBtn" />
+
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:id="@+id/tv1"/>
+
+ </LinearLayout>
+</LinearLayout>
+]]>
+</pre>
+Note how we have a second LinearLayout <em>within</em> the first LinearLayout, and the
+Button and TextView are within the second LinearLayout. Also note how the second LinearLayout
+has a <em>horizontal</em> orientation, so that components within it will appear next to each
+other. The net result will be that the button and TextView appear next to each other.</p>
+<h3>Relative Layouts</h3>
+<p>However, this probably isn't the nicest layout for this particular application. What
+would probably look best is to have the EditText and button next to each other, with the
+EditText occupying the majority of the row and the button the remainder. The TextView with the
+result would then appear on the next row. In other words, we might want a layout such as:
+<br />
+<img src="./XML Layouts_files/layout3.png" alt="Relative layout" />
+<br /> So, you might be
+thinking, how about just creating another LinearLayout within a layout, as before, with a
+horizontal orientation? The problem, though, is how you get the EditText to occupy the majority
+of the row. If you set both to have an android:layout_width of <em>wrap_content</em>, both
+EditText and Button will only occupy minimal space. If, on the other hand, you set the
+EditText to have an android:layout_width of <em>match_parent</em>, it will occupy the
+<em>whole</em> of the row and overwrite the button!</p>
+<p>A <em>relative layout</em> is the solution to this problem. With a relative layout, we
+can specify the position of components relative to each other and also specify whether
+components are aligned to the left, right, top or bottom of their parent component.
+What we have to do, as shown in the XML below, is to (the order doesn't
+matter, but doing it this way helps understand the concept better):
+	<ul>
+	<li>Add the button <em>first</em> - even though it's on the right hand side of the
+	row - and specify that it's aligned to the right of its parent, i.e. the RelativeLayout that
+	it is within (with <em>android:layout_alignParentRight="true"</em>). 
+	This will force the button to appear as far right as possible</li>
+	<li>Add the EditText <em>second</em>, specify that it's to appear to the left of
+	the button (with <em>android:layout_toLeftOf="@id/btn1"</em>), 
+	and set its android:layout_width to <em>match_parent</em>. Because it's
+	been forced to appear to the left of the button, it will only occupy the space
+	available to it, in other words the space between the left hand side of the screen
+	and the button.</li>
+	</ul>
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+ <RelativeLayout android:orientation="horizontal" android:layout_width="match_parent"
+ android:layout_height="wrap_content">
+ 
+<Button android:layout_width="wrap_content" android:layout_height="wrap_content"
+ android:id="@+id/btn1" android:text="@string/convertBtn" 
+ android:layout_alignParentRight="true"/>
+
+ <EditText
+    android:layout_width="match_parent" 
+    android:layout_height="wrap_content" 
+    android:id="@+id/et1"
+    android:layout_toLeftOf="@id/btn1"
+	android:inputType="numberDecimal"
+    />
+
+ </RelativeLayout>
+
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:id="@+id/tv1" android:text="@string/hello"/>
+
+</LinearLayout>
+
+]]>
+</pre>
+</p>
+<h4>Advanced exercise</h4>
+<p>Try using a relative layout to create this layout:
+<br />
+<img src="./XML Layouts_files/relativelayout.png" alt="Relative layout" /><br />
+Note that you can use the <em>android:textSize</em> attribute to set the text size, e.g give it a value
+of "12pt" for 12-point text.
+</p>
+
+<h2>Further reading</h2>
+<p><a href="http://developer.android.com/resources/tutorials/views/index.html">
+Layout Tutorials on Android site</a></p>
+
+<hr />
+
+<h3>Advanced Optional Topic: Layout weight</h3>
+<p>
+Imagine we wanted to write an app to report problems in the street
+(e.g broken lights, potholes etc). We might have a layout like this, where
+the user enters the problem in an EditText and can click either "OK" to report it or "Clear"
+to clear the EditText:
+<br />
+<img src="./XML Layouts_files/layoutweight1.png" alt="Layout weight" /><br />
+</p>
+<p>Create a new project and try setting its layout to the layout above
+(hint: use a RelativeLayout for the top level layout). The problem is:
+how do you get the buttons to occupy the whole of their row, and occupy
+the same amount of space? By default you will get this as the buttons
+will only use the space needed for them:
+<br />
+<img src="./XML Layouts_files/layoutweight2.png" alt="Layout weight" /><br />
+</p>
+<p>
+An easy way to do this is to give each button
+ (this technique is not restricted to butttons, it can
+be used for other UI elements) a <em>layout_weight</em>. The <em>layout_weight</em> indicates the relative proportion of each
+component to the others, so if each button has a <em>layout_weight</em>
+of 1, each button occupies the same amount of space. 
+However, because layout_width
+is a compulsory attribute, we have to give it a value. To avoid unnecessary computations which are then overridden
+by <em>layout_weight</em>, we simply set it to 0 pixels rather than one of the usual values such as <em>match_parent</em> 
+or <em>wrap_content</em>.</p>
+
+
+</body>
+</html>

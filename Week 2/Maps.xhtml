@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development: Topic 3:
+ Maps</title>
+<link rel="stylesheet" type="text/css" href="./Maps_files/android.css" />
+</head>
+
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Topic 3</h1>
+<h1>Maps</h1>
+</div>
+<h2>I need a map!</h2>
+<p>Most location-based apps include a map as the content view of
+their main activity.
+Android comes with inbuilt map functionality via Google Maps; however to use Google Maps
+you need to obtain an API key so we are going to use an alternative mapping library:
+<em>osmdroid</em>, available
+<a href="http://www.github.com/osmdroid/osmdroid">here</a>. (A <em>library</em> is a collection of Java classes with
+related functionality, such as mapping).</p>
+<p>osmdroid is a third-party open source library which uses
+maps from the <a href="http://www.openstreetmap.org/">OpenStreetMap</a> project. OpenStreetMap is a global
+project to provide free and open mapping data which anyone can contribute to;
+see <a href="http://www.openstreetmap.org/">the website</a> for more details. In using
+osmdroid, you will also see how to add external libraries to an Android project.
+<ul>
+<li>Start a new project called <em>Mapping</em>.</li>
+</ul>
+</p>
+<h2>Latitude and Longitude</h2>
+<p>In order to understand location-based applications, it is important
+to understand the coordinate system used on the earth. The most common
+coordinate system uses <em>latitude and longitude</em>. Latitude is a measure
+of how far north or south you are: the equator is at 0 degrees,
+while the North Pole is at 90 degrees North, we are at about 50 and Spain
+is at about 40. Longitude is a measure of how far east or west you are:
+0 degrees of longitude is referred to as the <em>Prime Meridian</em>
+(or <em>Greenwich Meridian</em>) and passes through Greenwich, London. 
+By contrast Germany is located
+between approximately 7 degrees and 15 degrees East, while New York is at
+74 degrees West and the west coast of North America at approximately 120
+degrees West.</p>
+<p><img src="./Maps_files/latlon.png" alt="Latitude and longitude" /></p>
+<p>So a given point on the earth can be defined via its latitude and
+longitude. We are at, approximately, 50.9 North (latitude) and 1.4 West
+(longitude). By convention, latitudes north of the equator and longitudes
+east of Greenwich are treated as positive, so we can also define our
+position as <strong>longitude -1.4, latitude +50.9</strong>.</p>
+<h2>Mapping code</h2>
+<p>Now you can get down to some actual coding.
+Here is a sample app using the OSMDroid Android API: 
+<pre>
+package com.example.map;
+
+import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+
+public class MainActivity extends AppCompatActivity 
+{
+
+    MapView mv;
+
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) 
+    {
+        
+        super.onCreate(savedInstanceState);    
+
+        // This line sets the user agent, a requirement to download OSM maps
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));        
+
+        setContentView(R.layout.activity_main);
+        
+        mv = findViewById(R.id.map1);
+        
+        mv.setMultiTouchControls(true);
+        mv.getController().setZoom(16.0);
+        mv.getController().setCenter(new GeoPoint(51.05,-0.72));
+    }
+}
+</pre>
+</p>
+<p>The main XML layout file is here:
+<pre>
+<![CDATA[
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+<org.osmdroid.views.MapView
+    android:layout_width="match_parent" 
+    android:layout_height="match_parent" 
+    android:enabled="true"
+    android:clickable="true"
+    android:id="@+id/map1"
+    tilesource="Mapnik"
+    />
+</LinearLayout>
+]]>
+</pre>
+</p>
+<p>Note how this is working:
+<ul>
+<li>In the XML layout, we add a component of type <em>MapView</em>, but because
+MapView is not part of the standard Android library, we have to include its 
+complete qualified name, including the package it belongs to, i.e.
+<em>org.osmdroid.views.MapView</em>.</li>
+<li>The main activity is actually quite straightforward. We obtain the MapView
+using its ID (as we have done with other components before) and then set the    
+zoom level (16; higher numbers are zoomed in further) 
+and the centre point of the map, in latitude and longitude.
+For more on latitude and longitude, see
+<a href="http://www.free-map.org.uk/course/wad_new/webmapping.php">here</a>.
+For more on zoom levels, see <a href="https://edward2.solent.ac.uk/course/mad/part3.xhtml#zoomdetail">below</a>, and
+<a href="http://code.google.com/apis/maps/documentation/javascript/v2/overlays.html#Google_Maps_Coordinates">
+Google's article on zoom levels</a>. 
+</li>
+</ul>
+</p>
+<h3>The manifest file and Permissions</h3>
+<p>The manifest file is an XML file describing the app and its components
+(e.g. the activities making up the app), as well as the app
+<em>permissions</em> (see below). It is called <em>AndroidManifest.xml</em>
+and can be found in <em>manifests</em>.</p>
+<p>Apps need to be granted <em>permissions</em> to perform sensitive 
+operations. Sensitive operations can include:
+    <ul>
+    <li><em>Using the internet</em> - because this might incur a cost to
+    the user, and have potential privacy/security concerns;</li>
+    <li><em>Tracking your location</em> - because this could be potentially
+    abused (e.g. by stalkers)</li>
+    <li><em>Reading from and writing to files</em> - again this has
+    security concerns.</li>    
+    </ul>
+</p>
+<p>Permissions are dealt with via two alternative mechanisms:
+    <ol>
+    <li>a simple mechanism, in which
+    the user grants permissions when the app is installed,
+    on Android 5 and downwards;</li>
+    <li> a more complex, but more flexible mechanism, in which users can turn 
+    permissions on and off at run time (i.e while the app is running)
+    via the Android settings, on Android 6 upwards.</li>
+    </ol>
+We will return to
+the latter mechanism later in the unit, but, to keep things simple, focus on
+the first mechanism now.
+</p>
+<p>
+To add permissions, we add them to the manifest file. OSMDroid needs the
+following:
+    <ul>
+    <li>READ_EXTERNAL_STORAGE and WRITE_EXTERNAL_STORAGE - because map tiles are cached on the device;</li>
+    <li>ACCESS_FINE_LOCATION - to access the GPS</li>
+    <li>ACCESS_WIFI_STATE and ACCESS_NETWORK_STATE - so that the wifi and network can be
+    used for positioning if the GPS is not available.</li>
+    </ul>
+So ensure your manifest file contains the following permissions. They should
+go <strong>before the &lt;application&gt; tag.</strong>
+<pre>
+<![CDATA[
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+]]>
+</pre>
+</p>
+<h3>Linking the libraries to your app</h3>
+<p>You also need to link the OSMDroid mapping library to your app via the <em>build.gradle</em>
+file. <em>build.gradle</em> is a set of instructions used by the build
+tool <em>Gradle</em> to create your app from your code and any third-party libraries it may require. Gradle is a standalone tool (can be used outside Android Studio), but is included within Android Studio.</p>
+<p>Note there are two <em>build.gradle</em> files, one for the whole project and one for your
+app specifically. It is the latter you need to edit. A build.gradle
+is shown below.
+</p>
+<p>
+<img src="./Maps_files/buildgradle.png" alt="build.gradle file" />
+</p>
+<p>
+Look for the dependencies section in the build.gradle file.
+Change the dependencies section so it looks like this:
+<pre>dependencies {
+    // KEEP THE OTHER DEPENDENCIES AS THEY ARE - DO NOT CHANGE THEM!
+    // .... other dependencies, e.g. support library, here ....    
+
+    <em class="comment">// ADD THIS!</em>
+    <strong>implementation</strong> 'org.osmdroid:osmdroid-android:6.1.0'
+}
+</pre>
+</p>
+<p>Note you should use <em>implementation</em> if you are using Android Studio
+3. <em>compile</em> is only used in Android Studio 2 or lower.</p>
+<p><strong>You also need to ensure that the targetSdkVersion is 22 or less in 
+your build.gradle,as otherwise, Android will
+enforce runtime permission checking  - see above.</strong></p>
+<p>Where is the OSMDroid library coming from? If you have used a build system
+such as Maven in standard Java, you might recognise the technique used. It
+downloads the OSMDroid library from an <em>online repository of Java
+libraries</em>. The specific repository used by default is 
+<em>Bintray JCenter</em>, which can be found 
+<a href="https://bintray.com/bintray/jcenter">here</a>. Another 
+common repository is <a href="https://search.maven.org/">Maven Central</a>.
+Once the dependency has been
+downloaded, it will be saved on your computer so that it will not need to
+be downloaded next time you open the project.</p>
+<p>The repositories used are specified in the <em>project build.gradle</em>
+file (the other one); you'll notice the <em>jcenter()</em> line in there
+which specifies that JCenter is being used.</p>
+<h3 id="zoomdetail">Details on the zoom levels</h3>
+<p>If you are interested, this is what the zoom levels represent. There is
+a series of zoom levels, with 0 the most zoomed out and
+successive levels progressively zoomed in. How does this work? Basically,
+zoom level 0 is defined as a flat map of the entire world, occupying 
+256x256 pixels, so that 360 degrees of longitude becomes 256 pixels and 
+180 degrees of latitude becomes 256 pixels, as shown below:
+<br />
+<img src="./Maps_files/zoom0.png" alt="Google Projection zoom level 0" /><br />
+Each successive zoom level zooms in by a factor of 2 in
+both directions, so
+that at zoom level 1, there are four 256x256 pixel tiles, each covering
+a quarter of the earth (N of the equator and W of the Greenwich Meridian;
+N of the equator and E of the Greenwich Meridian; 
+S of the equator and W of the Greenwich Meridian and
+S of the equator and E of the Greenwich Meridian): 
+<br />
+<img src="./Maps_files/zoom1.png" alt="Google Projection zoom level 1" /><br />
+With progressive zoom
+levels, we continue zooming in by a factor of 2, so that zoom level 2 has
+16 tiles (4x4), zoom level 3 has 64 (8x8), and so on. Each tile has
+an x and y coordinate where x=0 represents the leftmost column of tiles,
+y=0 represents the topmost row of tiles, and the tile with x=0 y=0 
+represents the top left tile (x=1 y=0 represents the second tile on the
+top row, and so on)</p>
+<p><em>Images from OpenStreetMap, (c) OSM contributors,
+licenced under CC-by-SA (not ODBL as they are old images)</em></p>
+<h3>Exercise 1</h3>
+<ul>
+<li>Try the example above out. It should show a map of Fernhurst, West Sussex
+(about 30 miles/50km east of here).</li>
+<li>Use the site <a href="http://www.informationfreeway.org/">
+informationfreeway.org</a> to look up the latitude and longitude of your
+home town. Make the map centre on your home town instead.</li>
+<li><strong>Publish your work on GitHub</strong>. See the
+<a href="https://edward2.solent.ac.uk/course/mad/git_cheat_sheet.docx">Git Cheat Sheet</a> for guidance. We will go 
+through this in class.</li>
+</ul>
+<h3>Exercise 2 - Consolidation</h3>
+<p>This exercise allows you to revise the previous
+<a href="https://edward2.solent.ac.uk/course/mad/part2.php">layouts and event handling</a> topic. Enhance your
+app so that it has a UI like this. <em>Create the XML by hand; do not use
+the UI designer.</em>
+<br />
+<img src="./Maps_files/consolidation_layout.png" alt="Consolidation exercise layout" />
+<br />
+When the user clicks "Go", the map should move to the latitude and longitude
+that the user entered in the two EditTexts.
+<strong>When finished, commit the changes and push
+your work to GitHub again!</strong>
+</p>
+</body>
+</html>

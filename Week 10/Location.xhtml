@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Mobile Application Development: Part 12:
+Location</title>
+<link rel="stylesheet" type="text/css" href="./Location_files/android.css" />
+</head>
+
+<body>
+<div class="titlebox">
+<h1>Mobile Application Development - Part 12</h1>
+<h1>Location</h1>
+</div>
+
+<p>In this section we will:
+    <ul>
+    <li>Look at how to communicate with GPS satellites from Android</li>
+    </ul>
+</p>
+
+
+<h2>Location</h2>
+<p>Many of the most interesting mobile apps are <em>location-based apps</em>, in other words,
+the app is sensitive to the user's location on earth. We might, for instance, have an app
+which displays a map of your current location. Or an app which looks up the nearest pubs,
+bus stops or railway stations. Such apps send the user's <em>location</em> to a web server,
+which then delivers data near that location. Most smartphones contain a <em>GPS chip</em>
+which obtains the device's location by communicating with Global Positioning System
+(GPS) satellites: the same mechanism used in car satnav systems. So, since location is
+so important in mobile app development, we are going to look at it now.</p>
+<h3>Ethical issues with geolocation</h3>
+<p>There are important ethical issues when it comes to location. Potentially,
+a malicious app could gather your location and send it to your server with
+a user's personal details, which could allow the user to be tracked without
+their consent. For this reason, location tracking is treated as a sensitive
+operation and must be stated explicitly in the permissions.
+</p>
+<p>Furthermore, it is recommended to create an explicit privacy policy on
+your app's website (which can be linked to from Google Play) which spells
+out to users why the app needs location information and what will be done
+with it.</p>
+<h4>Adding location permission to the manifest file</h4>
+<p>To add to location permission to the manifest:
+<pre>
+<![CDATA[
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+]]>
+</pre>
+</p>
+<h3>Basic use of Geolocation</h3>
+<p>
+Here is the Java code for a simple Geolocation app:
+<pre>
+<![CDATA[
+package com.example.nickw.location;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.location.LocationManager;
+import android.location.LocationListener;
+import android.location.Location;
+import android.content.Context;
+import android.widget.Toast;
+
+
+
+public class MainActivity extends Activity implements LocationListener 
+{
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) 
+    {
+        super.onCreate(savedInstanceState);        
+        setContentView(R.layout.activity_main);
+        
+        LocationManager mgr=(LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
+    }  
+    
+    public void onLocationChanged(Location newLoc) 
+    {
+        
+        Toast.makeText
+          (this, "Location=" +
+           newLoc.getLatitude()+ " " + 
+           newLoc.getLongitude() , Toast.LENGTH_LONG).show();
+    }
+    
+    public void onProviderDisabled(String provider) 
+    {
+        Toast.makeText(this, "Provider " + provider + 
+                              " disabled", Toast.LENGTH_LONG).show();
+    }
+
+    public void onProviderEnabled(String provider) 
+    {
+        Toast.makeText(this, "Provider " + provider +
+                            " enabled", Toast.LENGTH_LONG).show();
+    }
+    
+    public void onStatusChanged(String provider,int status,Bundle extras) 
+    {
+    
+        Toast.makeText(this, "Status changed: " + status, 
+            Toast.LENGTH_LONG).show();
+    }
+}
+]]>
+</pre>
+This app is perhaps the simplest possible location based app. It will listen to the
+device's GPS and update the main content view with the current latitude and longitude
+(position on earth). So how does it work? The key thing is that there are three main
+components involved in obtaining your location: 
+<ul>
+<li>the <em>location provider</em> 
+(representing the actual provider of your location, such as the GPS, WiFi network
+or cell tower network). A string is used to refer to the provider.</li>
+<li>the <em>location manager</em> (class LocationManager) which controls access to the provider,
+allowing you to set such things as frequency of updates;</li>
+<li>the <em>location listener</em>
+(the object which handles location updates, so that every time the GPS location changes,
+for example, code in the location listener will run to react to the change in location).
+</li>
+</ul>
+</p>
+<p>
+To go through the code above in more detail:
+<ul>
+<li>First we obtain a LocationManager. We do not instantiate a LocationManager
+object; instead we ask the system to obtain the default location manager for
+us with:
+<pre>LocationManager mgr=(LocationManager)getSystemService(Context.LOCATION_SERVICE);</pre>
+</li>
+<li>We then ask the location manager to update the app with new location informatiom, using:
+<pre>mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);</pre>
+Note the parameters:
+    <ul>
+    <li>The first parameter specifies we are using a GPS provider (we could,
+    alternatively, request a network provider - e.g. WiFi/cell tower - instead with
+    <em>LocationManager.NETWORK_PROVIDER</em>).</li>
+    <li>The second parameter specifies the frequency of updates in milliseconds (0
+    means update as frequently as possible);</li>
+    <li>The third parameter specifies the minimum distance we must travel, in metres,
+    before an update is obtained (again 0 means update as frequently as possible);</li>
+    <li>The fourth parameter specifies the <em>LocationListener</em> object which will
+    process the location updates received - here it is <em>this</em>, i.e the current Activity
+	will act as the LocationListener.</li>
+    </ul>
+</li>
+<li>A LocationListener is any object which <em>implements LocationListener</em> e.g.
+<pre>public class MainActivity extends Activity <em>implements LocationListener</em></pre>.
+Here it is the Activity but it could equally well be a separate class.
+(This is a Java feature called an <em>interface</em> which we will look at later).</li>
+</ul>
+</p>
+<p>In a <em>LocationListener</em>, you must provide four methods to handle different
+location events:
+    <ul>
+    <li><em>onLocationChanged()</em>, which takes a Location object as a parameter. This
+    runs when a new location is received from the provider.</li>
+    <li><em>onProviderDisabled()</em> and <em>onProviderEnabled()</em>, which run when
+    you physically disable, or re-enable, that provider (e.g the GPS) from your device.
+    Often you can leave these blank but if you want specific behaviour to occur when
+    the user switches the GPS on and off, you would write it here.</li>
+    <li><em>onStatusChanged()</em> which runs when the status of the location provider
+    changes, e.g. we lose the GPS signal. Again, this can be left blank for simple applications.</li>
+	<li>For more on these methods, see
+	<a href="http://developer.android.com/reference/android/location/LocationListener.html">the API documentation</a>.</li>
+    </ul>
+</p>
+<p>The<em>onLocationChanged()</em> method takes a single parameter - a <em>Location</em> object
+representing our current location. It has two methods, <em>getLatitude()</em> and
+<em>getLongitude()</em>, for getting the actual latitude and longitude. So, in this 
+app, we simply display the current latitude and longitude with what is called
+a <em>Toast</em>. A Toast is a temporary message which appears as an overlay
+on the screen. To create and show a Toast we do:
+<pre>Toast.makeText (this, message, length).show();</pre>
+<em>this</em> refers to the activity. <em>length</em> can either be 
+Toast.LENGTH_SHORT or Toast.LENGTH_LONG.</p>
+
+<h4>Testing with a virtual device</h4>
+<p>If you do not have a real device, it
+is possible to test it in a development environment (with a GPS provider) by sending "virtual" locations to the emulator.</p>
+<p>
+This is quite straightforward. Click on the three dots (...) at the bottom of the controls of the virtual 
+device (to the right of the screen). This will take you to a window in which you can fill in the latitude and
+longitude (look on the right hand side), and then click "SEND".
+This will send a virtual GPS signal to the device, containing the latitude 
+and longitude entered. </p>
+<h4>Exercise 1</h4>
+<ul>
+<li>Add the Geolocation code to your existing mapping app, ideally the simplest
+version with limited functionality (clone it from GitHub first if it's there). 
+In <em>onLocationChanged()</em>, add
+code to set the map's location to the GPS latitude and longitude.</li>
+<li>Test it out using the emulator to change the latitude and longitude, as detailed above.</li>
+</ul>
+</body>
+</html>
